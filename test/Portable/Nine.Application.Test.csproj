@@ -39,5 +39,11 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Portable\Nine.Application.csproj">
+      <Project>{e0c2a8fa-8a86-4e45-a335-1333c3f29dcf}</Project>
+      <Name>Nine.Application</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
 </Project>

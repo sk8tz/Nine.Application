@@ -113,6 +113,17 @@
   <ItemGroup>
     <Content Include="Entitlements.plist" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\iOS\Nine.Application.iOS.csproj">
+      <Project>{ad3ae07e-5f2d-4b64-bbe5-86e951583e8f}</Project>
+      <Name>Nine.Application.iOS</Name>
+      <IsAppExtension>false</IsAppExtension>
+    </ProjectReference>
+    <ProjectReference Include="..\Portable\Nine.Application.Test.csproj">
+      <Project>{ff58836b-1848-4f63-8ffb-df203e75d96c}</Project>
+      <Name>Nine.Application.Test</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

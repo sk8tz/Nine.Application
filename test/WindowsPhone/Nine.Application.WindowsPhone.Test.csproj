@@ -161,6 +161,16 @@
       <HintPath>..\..\packages\xunit.extensibility.core.2.0.0-rc3-build2880\lib\portable-net45+aspnetcore50+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WindowsPhone\Nine.Application.WindowsPhone.csproj">
+      <Project>{fcd4fdbd-60ca-4441-a286-3679968e6b0d}</Project>
+      <Name>Nine.Application.WindowsPhone</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Portable\Nine.Application.Test.csproj">
+      <Project>{ff58836b-1848-4f63-8ffb-df203e75d96c}</Project>
+      <Name>Nine.Application.Test</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).$(TargetFrameworkVersion).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

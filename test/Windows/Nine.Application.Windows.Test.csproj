@@ -105,6 +105,16 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Windows\Nine.Application.Windows.csproj">
+      <Project>{65bc127c-f7ca-4758-b0bf-1e373790d1b7}</Project>
+      <Name>Nine.Application.Windows</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Portable\Nine.Application.Test.csproj">
+      <Project>{ff58836b-1848-4f63-8ffb-df203e75d96c}</Project>
+      <Name>Nine.Application.Test</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
