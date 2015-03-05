@@ -37,28 +37,44 @@
 
         public async Task<bool> Confirm(string title, string message, string yes, string no = null, CancellationToken cancellation = default(CancellationToken))
         {
-            await ui.Confirm(title, message, yes, no, DelayCancellation(cancellation));
+            try
+            {
+                await ui.Confirm(title, message, yes, no, DelayCancellation(cancellation));
+            }
+            catch (TaskCanceledException) { }
             await Snapshot();
             return confirm;
         }
 
         public async Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation = default(CancellationToken))
         {
-            await ui.Input(title, defaultText, yes, DelayCancellation(cancellation));
+            try
+            {
+                await ui.Input(title, defaultText, yes, DelayCancellation(cancellation));
+            }
+            catch (TaskCanceledException) { }
             await Snapshot();
             return input;
         }
 
         public async Task<bool> Notify(string title, string message, IDictionary<string, string> args = null, CancellationToken cancellation = default(CancellationToken))
         {
-            await ui.Notify(title, message, args, DelayCancellation(cancellation));
+            try
+            {
+                await ui.Notify(title, message, args, DelayCancellation(cancellation));
+            }
+            catch (TaskCanceledException) { }
             await Snapshot();
             return notify;
         }
 
         public async Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation = default(CancellationToken))
         {
-            await ui.Select(title, selectedIndex, items, DelayCancellation(cancellation));
+            try
+            {
+                await ui.Select(title, selectedIndex, items, DelayCancellation(cancellation));
+            }
+            catch (TaskCanceledException) { }
             await Snapshot();
             return select;
         }
