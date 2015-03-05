@@ -16,11 +16,13 @@
     <AndroidApplication>true</AndroidApplication>
     <AndroidResgenFile>Resources\Resource.Designer.cs</AndroidResgenFile>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-    <AndroidUseLatestPlatformSdk>True</AndroidUseLatestPlatformSdk>
+    <AndroidUseLatestPlatformSdk>
+    </AndroidUseLatestPlatformSdk>
     <DevInstrumentationEnabled>True</DevInstrumentationEnabled>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <NuGetPackageImportStamp>690e36b7</NuGetPackageImportStamp>
+    <TargetFrameworkVersion>v2.3</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
