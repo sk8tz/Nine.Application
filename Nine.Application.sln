@@ -30,6 +30,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nine.Application.iOS.Test", "test\iOS\Nine.Application.iOS.Test.csproj", "{75536697-5C71-4EE1-B78E-BCA0F0337478}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nine.Application.WindowsStore.Test", "test\WindowsStore\Nine.Application.WindowsStore.Test.csproj", "{8A55E99A-0763-44A4-BFF4-38B0F726491C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FF58836B-1848-4F63-8FFB-DF203E75D96C} = {FF58836B-1848-4F63-8FFB-DF203E75D96C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -584,6 +587,7 @@ Global
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.AppStore|x64.ActiveCfg = AppStore|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.AppStore|x86.ActiveCfg = AppStore|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|Any CPU.ActiveCfg = Debug|iPhone
+		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|Any CPU.Build.0 = Debug|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|ARM.ActiveCfg = Debug|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|iPhone.ActiveCfg = Debug|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|iPhone.Build.0 = Debug|iPhone
@@ -592,6 +596,7 @@ Global
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|x64.ActiveCfg = Debug|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Debug|x86.ActiveCfg = Debug|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Release|Any CPU.ActiveCfg = Release|iPhone
+		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Release|Any CPU.Build.0 = Release|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Release|ARM.ActiveCfg = Release|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Release|iPhone.ActiveCfg = Release|iPhone
 		{75536697-5C71-4EE1-B78E-BCA0F0337478}.Release|iPhone.Build.0 = Release|iPhone

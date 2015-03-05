@@ -136,6 +136,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Nine.Application.Test, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Portable\bin\Debug\Nine.Application.Test.dll</HintPath>
+    </Reference>
     <Reference Include="xunit.abstractions">
       <HintPath>..\..\packages\xunit.abstractions.2.0.0-rc3-build2880\lib\portable-net45+aspnetcore50+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.abstractions.dll</HintPath>
     </Reference>
@@ -150,10 +154,6 @@
     <ProjectReference Include="..\..\src\WindowsStore\Nine.Application.WindowsStore.csproj">
       <Project>{32265c11-f80f-48da-95ec-3378e3563719}</Project>
       <Name>Nine.Application.WindowsStore</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Portable\Nine.Application.Test.csproj">
-      <Project>{ff58836b-1848-4f63-8ffb-df203e75d96c}</Project>
-      <Name>Nine.Application.Test</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">
