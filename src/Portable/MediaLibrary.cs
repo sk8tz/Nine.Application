@@ -2,8 +2,9 @@
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
 
-    public partial class MediaLibrary
+    public partial class MediaLibrary : IMediaLibrary
     {
         private static Tuple<int, int> Crop(int width, int height, int maxSize = 1024)
         {
@@ -85,5 +86,14 @@
 
             stream.Seek(oldPos, SeekOrigin.Begin);
         }
+
+#if PCL
+        public Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue) => Task.FromResult<Stream>(null);
+        public Task SaveImageToLibrary(Stream image, string filename) => Task.FromResult(0);
+        public Task PlaySound(string uri) => Task.FromResult(0);
+        public void StopSound() { }
+        public void BeginCaptureAudio() { }
+        public Stream EndCaptureAudio() => null;
+#endif
     }
 }

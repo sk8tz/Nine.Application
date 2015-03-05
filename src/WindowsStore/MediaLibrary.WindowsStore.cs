@@ -36,7 +36,15 @@
 
         public async Task SaveImageToLibrary(Stream image, string filename)
         {
-            var file = await KnownFolders.PicturesLibrary.CreateFileAsync(filename, CreationCollisionOption.GenerateUniqueName);
+            var picturesFolder = KnownFolders.PicturesLibrary;
+            var folder = Path.GetDirectoryName(filename);
+            if (!string.IsNullOrEmpty(folder))
+            {
+                picturesFolder = await picturesFolder.CreateFolderAsync(folder, CreationCollisionOption.OpenIfExists);
+            }
+
+            var name = Path.GetFileName(filename);
+            var file = await picturesFolder.CreateFileAsync(name, CreationCollisionOption.GenerateUniqueName);
             using (var stream = (await file.OpenAsync(FileAccessMode.ReadWrite)).AsStreamForWrite())
             {
                 await image.CopyToAsync(stream);

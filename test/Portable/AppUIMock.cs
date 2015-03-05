@@ -3,24 +3,33 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
 
     public class AppUIMock : IAppUI
     {
         private readonly IAppUI ui;
+        private readonly IMediaLibrary media;
+        private readonly IClientInfoProvider clientInfo;
         private readonly TimeSpan delay;
+        private readonly string prefix;
+
+        private int ordinal;
 
         private bool confirm;
         private bool notify;
         private string input;
         private int? select;
 
-        public AppUIMock(IAppUI ui, TimeSpan delay = default(TimeSpan))
+        public AppUIMock(IAppUI ui, [CallerMemberName]string prefix = null, IMediaLibrary media = null, TimeSpan delay = default(TimeSpan))
         {
             if (ui == null) throw new ArgumentNullException(nameof(ui));
 
             this.ui = ui;
+            this.prefix = prefix;
+            this.media = media ?? new MediaLibrary();
+            this.clientInfo = new ClientInfoProvider();
             this.delay = (delay == default(TimeSpan) ? TimeSpan.FromSeconds(1) : delay);
         }
 
@@ -42,7 +51,6 @@
                 await ui.Confirm(title, message, yes, no, DelayCancellation(cancellation));
             }
             catch (TaskCanceledException) { }
-            await Snapshot();
             return confirm;
         }
 
@@ -53,7 +61,6 @@
                 await ui.Input(title, defaultText, yes, DelayCancellation(cancellation));
             }
             catch (TaskCanceledException) { }
-            await Snapshot();
             return input;
         }
 
@@ -64,7 +71,6 @@
                 await ui.Notify(title, message, args, DelayCancellation(cancellation));
             }
             catch (TaskCanceledException) { }
-            await Snapshot();
             return notify;
         }
 
@@ -75,7 +81,6 @@
                 await ui.Select(title, selectedIndex, items, DelayCancellation(cancellation));
             }
             catch (TaskCanceledException) { }
-            await Snapshot();
             return select;
         }
 
@@ -115,14 +120,25 @@
 
         private CancellationToken DelayCancellation(CancellationToken cancellation)
         {
-            var delayedCts = new CancellationTokenSource(delay);
+            var delayedCts = new CancellationTokenSource();
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellation, delayedCts.Token);
+            Snapshot(delayedCts);
             return cts.Token;
         }
 
-        private Task Snapshot()
+        private async void Snapshot(CancellationTokenSource cts)
         {
-            return ui.CaptureScreenshot();
+            await Task.Delay(delay);
+            await Snapshot();
+            cts.Cancel();
+        }
+
+        private async Task Snapshot()
+        {
+            var info = await clientInfo.GetAsync();
+            var screenshot = await ui.CaptureScreenshot();
+            var screenshotName = info.OperatingSystem + "/" + prefix + "_" + (ordinal++) + ".jpg";
+            await media.SaveImageToLibrary(screenshot, screenshotName);
         }
     }
 }

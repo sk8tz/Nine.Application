@@ -1,41 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-
-  <Identity Name="83414a8e-2e90-4722-949f-e082ef7de4fc"
-            Publisher="CN=yufeih"
-            Version="1.0.0.0" />
-
+  <Identity Name="83414a8e-2e90-4722-949f-e082ef7de4fc" Publisher="CN=yufeih" Version="1.0.0.0" />
   <Properties>
     <DisplayName>Nine.Application.WindowsStore.Test</DisplayName>
     <PublisherDisplayName>yufeih</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
-
   <Prerequisites>
     <OSMinVersion>6.3.0</OSMinVersion>
     <OSMaxVersionTested>6.3.0</OSMaxVersionTested>
   </Prerequisites>
-
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="x-generate" />
   </Resources>
-
   <Applications>
-    <Application Id="App"
-        Executable="$targetnametoken$.exe"
-        EntryPoint="Nine.Application.WindowsStore.Test.App">
-        <m2:VisualElements
-            DisplayName="Nine.Application.WindowsStore.Test"
-            Square150x150Logo="Assets\Logo.png"
-            Square30x30Logo="Assets\SmallLogo.png"
-            Description="Nine.Application.WindowsStore.Test"
-            ForegroundText="light"
-            BackgroundColor="#464646">
-            <m2:SplashScreen Image="Assets\SplashScreen.png" />
-        </m2:VisualElements>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="Nine.Application.WindowsStore.Test.App">
+      <m2:VisualElements DisplayName="Nine.Application.WindowsStore.Test" Square150x150Logo="Assets\Logo.png" Square30x30Logo="Assets\SmallLogo.png" Description="Nine.Application.WindowsStore.Test" ForegroundText="light" BackgroundColor="#464646">
+        <m2:SplashScreen Image="Assets\SplashScreen.png" />
+      </m2:VisualElements>
     </Application>
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <Capability Name="picturesLibrary" />
   </Capabilities>
 </Package>

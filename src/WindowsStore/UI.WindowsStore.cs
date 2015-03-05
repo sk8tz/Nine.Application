@@ -11,6 +11,7 @@
     using Windows.ApplicationModel.DataTransfer;
     using Windows.Graphics.Display;
     using Windows.Graphics.Imaging;
+    using Windows.Storage.Streams;
     using Windows.System;
     using Windows.UI.Notifications;
     using Windows.UI.Popups;
@@ -171,8 +172,8 @@
             var renderTargetBitmap = new RenderTargetBitmap();
             await renderTargetBitmap.RenderAsync(element);
             var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();
-            var ms = new MemoryStream();
-            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, ms.AsRandomAccessStream());
+            var ms = new InMemoryRandomAccessStream();
+            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, ms);
             encoder.SetPixelData(
                 BitmapPixelFormat.Bgra8,
                 BitmapAlphaMode.Ignore,
@@ -181,10 +182,8 @@
                 DisplayInformation.GetForCurrentView().LogicalDpi,
                 DisplayInformation.GetForCurrentView().LogicalDpi,
                 pixelBuffer.ToArray());
-
             await encoder.FlushAsync();
-            ms.Seek(0, SeekOrigin.Begin);
-            return ms;
+            return ms.AsStreamForRead();
         }
 
         public async void RateMe()
