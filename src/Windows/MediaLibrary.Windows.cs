@@ -4,7 +4,7 @@
     using System.IO;
     using System.Threading.Tasks;
 
-    public partial class Media : IMediaLibrary
+    public partial class MediaLibrary : IMediaLibrary
     {
         public void BeginCaptureAudio()
         {

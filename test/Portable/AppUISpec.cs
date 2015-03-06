@@ -10,10 +10,15 @@
 
         public abstract IEnumerable<IAppUI> GetData();
 
+        private readonly IMediaLibrary media;
+
+        public AppUISpec() : this(null) { }
+        public AppUISpec(IMediaLibrary media) { this.media = media ?? new MediaLibrary(); }
+
         [Theory, MemberData("Data")]
         public async Task confirm_yes(IAppUI ui)
         {
-            var mock = new AppUIMock(ui);
+            var mock = new AppUIMock(ui, media);
 
             await mock.Confirm(
                 "Are you sure you want to participate in this test with a really really long title ???",

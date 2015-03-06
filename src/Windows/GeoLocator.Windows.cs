@@ -4,7 +4,7 @@
 
     partial class Geolocator
     {
-        public static Task<GeoLocation> FindAsync()
+        public Task<GeoLocation> FindAsync()
         {
             return Task.FromResult<GeoLocation>(null);
         }

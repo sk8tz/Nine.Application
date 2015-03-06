@@ -7,10 +7,10 @@
 
     partial class Geolocator
     {
-        private static readonly CLLocationManager location = new CLLocationManager();
-        private static TaskCompletionSource<GeoLocation> completion;
+        private readonly CLLocationManager location = new CLLocationManager();
+        private TaskCompletionSource<GeoLocation> completion;
 
-        public static Task<GeoLocation> FindAsync()
+        public Task<GeoLocation> FindAsync()
         {
             completion = new TaskCompletionSource<GeoLocation>();
 

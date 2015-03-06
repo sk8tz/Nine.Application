@@ -6,9 +6,9 @@
 
     partial class Geolocator
     {
-        private static readonly Windows.Devices.Geolocation.Geolocator locator = new Windows.Devices.Geolocation.Geolocator();
+        private readonly Windows.Devices.Geolocation.Geolocator locator = new Windows.Devices.Geolocation.Geolocator();
 
-        public async static Task<GeoLocation> FindAsync()
+        public async Task<GeoLocation> FindAsync()
         {
             if (locator.LocationStatus == PositionStatus.Disabled || locator.LocationStatus == PositionStatus.NotAvailable) return null;
 

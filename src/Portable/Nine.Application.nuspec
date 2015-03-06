@@ -1,0 +1,25 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$-alpha</version>
+    <authors>$author$</authors>
+    <licenseUrl>https://github.com/studio-nine/Nine.Application/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/studio-nine/Nine.Application</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <tags>PCL, Portable, Xamarin, iOS, Android, Windows Phone, Windows Store, UI, Media, GeoLocation</tags>
+  </metadata>
+  <files>
+    <file src="..\Windows\bin\$configuration$\$id$.dll" target="lib\net45" />
+    <file src="..\Windows\bin\$configuration$\$id$.xml" target="lib\net45" />
+    <file src="..\WindowsStore\bin\$configuration$\$id$.dll" target="lib\netcore451" />
+    <file src="..\WindowsStore\bin\$configuration$\$id$.xml" target="lib\netcore451" />
+    <file src="..\WindowsPhone\bin\$configuration$\$id$.dll" target="lib\wp8" />
+    <file src="..\WindowsPhone\bin\$configuration$\$id$.xml" target="lib\wp8" />
+    <file src="..\Android\bin\$configuration$\$id$.dll" target="lib\MonoAndroid" />
+    <file src="..\Android\bin\$configuration$\$id$.xml" target="lib\MonoAndroid" />
+    <file src="..\iOS\bin\$configuration$\$id$.dll" target="lib\MonoTouch" />
+    <file src="..\iOS\bin\$configuration$\$id$.xml" target="lib\MonoTouch" />
+  </files>
+</package>

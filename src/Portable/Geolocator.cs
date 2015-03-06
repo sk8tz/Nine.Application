@@ -3,10 +3,15 @@
     using System;
     using System.Threading.Tasks;
 
-    public partial class Geolocator
+    public interface IGeolocator
+    {
+        Task<GeoLocation> FindAsync();
+    }
+
+    public partial class Geolocator : IGeolocator
     {
 #if PCL
-        public static Task<GeoLocation> FindAsync()
+        public Task<GeoLocation> FindAsync()
         {
             throw new NotSupportedException();
         }

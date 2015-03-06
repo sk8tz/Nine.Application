@@ -17,15 +17,25 @@
     public partial class AppUI : IAppUI
     {
         private const int NotificationCode = 90002;
+        private readonly Func<Context> contextFactory;
 
         public static readonly Dictionary<string, Type> KnownTypes = new Dictionary<string, Type>();
 
+        public AppUI(Context context) : this(() => context) { }
+        public AppUI(Func<Context> contextFactory)
+        {
+            if (contextFactory == null) throw new ArgumentNullException(nameof(contextFactory));
+
+            this.contextFactory = contextFactory;
+        }
+
         public virtual Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
-            if (ActivityContext.Current == null) return Task.FromResult(false);
+            var context = contextFactory();
+            if (context == null) return Task.FromResult(false);
 
             var tcs = new TaskCompletionSource<bool>();
-            var builder = new AlertDialog.Builder(ActivityContext.Current)
+            var builder = new AlertDialog.Builder(context)
                 .SetMessage(message)
                 .SetPositiveButton(yes, new ClickListener((e, i) =>
                 {
@@ -60,21 +70,22 @@
 
         public virtual void Toast(string title, string message)
         {
-            if (ActivityContext.Current == null) return;
+            var context = contextFactory();
+            if (context == null) return;
             if (!string.IsNullOrEmpty(title)) message = title + ": " + message;
 
-            Android.Widget.Toast.MakeText(ActivityContext.Current, message, ToastLength.Short).Show();
+            Android.Widget.Toast.MakeText(context, message, ToastLength.Short).Show();
         }
 
         public virtual Task<bool> Notify(string title, string message, IDictionary<string, string> args, CancellationToken cancellation)
         {
-            if (ActivityContext.Current == null) return Task.FromResult(false);
+            var context = contextFactory();
+            if (context == null) return Task.FromResult(false);
             if (!string.IsNullOrEmpty(title)) message = title + ": " + message;
 
             title = title ?? "";
             message = message ?? "";
 
-            var context = ActivityContext.Current;
             var packageName = context.PackageName;
             var icon = context.Resources.GetIdentifier("icon", "drawable", packageName);
 
@@ -96,7 +107,7 @@
                 intent.SetFlags(ActivityFlags.ReorderToFront);
 
                 // NOTE: request code CANNOT be 0 for the notification to bring up the activity.
-                var pendingIntent = PendingIntent.GetActivity(context, System.Environment.TickCount, intent, PendingIntentFlags.UpdateCurrent);
+                var pendingIntent = PendingIntent.GetActivity(context, Environment.TickCount, intent, PendingIntentFlags.UpdateCurrent);
                 builder.SetContentIntent(pendingIntent);
             }
 
@@ -106,19 +117,21 @@
             return Task.FromResult(false);
         }
 
-        public static void ClearNotifications()
+        public void ClearNotifications()
         {
-            if (ActivityContext.Current == null) return;
-            var manager = (NotificationManager)ActivityContext.Current.GetSystemService(Context.NotificationService);
+            var context = contextFactory();
+            if (context == null) return;
+            var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
             manager.Cancel(NotificationCode);
         }
 
         public virtual Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation)
         {
-            if (ActivityContext.Current == null) return Task.FromResult<int?>(null);
+            var context = contextFactory();
+            if (context == null) return Task.FromResult<int?>(null);
 
             var tcs = new TaskCompletionSource<int?>();
-            var dialog = new AlertDialog.Builder(ActivityContext.Current)
+            var dialog = new AlertDialog.Builder(context)
                 .SetTitle(title)
                 .SetSingleChoiceItems(items.ToArray(),
                 selectedIndex ?? 0,
@@ -141,13 +154,14 @@
 
         public virtual Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation)
         {
-            if (ActivityContext.Current == null) return Task.FromResult("");
+            var context = contextFactory();
+            if (context == null) return Task.FromResult("");
 
             var tcs = new TaskCompletionSource<string>();
-            var input = new EditText(ActivityContext.Current) { Text = defaultText };
+            var input = new EditText(context) { Text = defaultText };
             input.SetSingleLine();
             
-            var dialog = new AlertDialog.Builder(ActivityContext.Current)
+            var dialog = new AlertDialog.Builder(context)
                 .SetTitle(title)
                 .SetView(input)
                 .SetPositiveButton(yes, new ClickListener((e, i) =>
@@ -169,7 +183,7 @@
 
         public virtual void RateMe()
         {
-            var activity = ActivityContext.Current as Activity;
+            var activity = contextFactory() as Activity;
             if (activity == null) return;
 
             var uri = Android.Net.Uri.Parse("market://details?id=" + activity.PackageName);
@@ -178,12 +192,16 @@
 
         public virtual void CopyToClipboard(string text)
         {
-            ((ClipboardManager)ActivityContext.Current.GetSystemService(Context.ClipboardService)).Text = text;
+            var context = contextFactory();
+            if (context == null) return;
+
+            ((ClipboardManager)context.GetSystemService(Context.ClipboardService)).Text = text;
         }
 
         public virtual void Browse(string url)
         {
-            if (ActivityContext.Current == null) return;
+            var context = contextFactory();
+            if (context == null) return;
 
             if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
                 !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -191,12 +209,12 @@
                 url = "http://" + url;
             }
 
-            ActivityContext.Current.StartActivity(new Intent(Intent.ActionView, Android.Net.Uri.Parse(url)));
+            context.StartActivity(new Intent(Intent.ActionView, Android.Net.Uri.Parse(url)));
         }
 
         public virtual Task<Stream> CaptureScreenshot()
         {
-            var activity = ActivityContext.Current as Activity;
+            var activity = contextFactory() as Activity;
             if (activity == null) return null;
 
             return CaptureScreenshot(activity.Window.DecorView.RootView);
