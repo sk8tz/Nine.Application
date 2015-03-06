@@ -8,9 +8,15 @@
 
     partial class Geolocator
     {
-        private static GeoLocationProvider provider = new GeoLocationProvider();
+        private readonly GeoLocationProvider provider;
 
-        public async static Task<GeoLocation> FindAsync()
+        public Geolocator(Context context) : this(() => context) { }
+        public Geolocator(Func<Context> contextFactory)
+        {
+            this.provider = new GeoLocationProvider(contextFactory);
+        }
+
+        public async Task<GeoLocation> FindAsync()
         {
             var point = await provider.FindAsync();
             if (point == null) return null;
@@ -19,8 +25,13 @@
 
         class GeoLocationProvider : Java.Lang.Object, ILocationListener
         {
-            private LocationManager location = ActivityContext.Current.GetSystemService(Context.LocationService) as LocationManager;
+            private readonly LocationManager location;
             private TaskCompletionSource<Location> completion;
+
+            public GeoLocationProvider(Func<Context> contextFactory)
+            {
+                this.location = contextFactory().GetSystemService(Context.LocationService) as LocationManager;
+            }
 
             public Task<Location> FindAsync()
             {

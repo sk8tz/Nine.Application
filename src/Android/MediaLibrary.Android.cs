@@ -22,6 +22,16 @@
         private static Android.Net.Uri lastPickedImage;
         private static int maxImageSize;
 
+        private readonly Func<Context> contextFactory;
+
+        public MediaLibrary(Context context) : this(() => context) { }
+        public MediaLibrary(Func<Context> contextFactory)
+        {
+            if (contextFactory == null) throw new ArgumentNullException(nameof(contextFactory));
+
+            this.contextFactory = contextFactory;
+        }
+
         public Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue)
         {
             maxImageSize = maxSize;

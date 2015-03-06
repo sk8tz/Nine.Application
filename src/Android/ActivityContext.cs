@@ -16,7 +16,7 @@
                 {
                     current = value;
                     Activity = value as BaseActivity;
-                    AppUI.ClearNotifications();
+                    // TODO AppUI.ClearNotifications();
                 }
             }
         }
