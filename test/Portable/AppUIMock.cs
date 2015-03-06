@@ -137,7 +137,7 @@
         {
             var info = await clientInfo.GetAsync();
             var screenshot = await ui.CaptureScreenshot();
-            var screenshotName = info.OperatingSystem + "/" + prefix + "_" + (ordinal++) + ".jpg";
+            var screenshotName = "UITest/" + info.OperatingSystem + "/" + prefix + "_" + (ordinal++) + ".jpg";
             await media.SaveImageToLibrary(screenshot, screenshotName);
         }
     }
