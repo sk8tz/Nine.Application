@@ -4,8 +4,9 @@
     <id>$id$</id>
     <version>$version$-alpha</version>
     <authors>$author$</authors>
-    <licenseUrl>https://github.com/studio-nine/Nine.Application/blob/master/LICENSE</licenseUrl>
-    <projectUrl>https://github.com/studio-nine/Nine.Application</projectUrl>
+    <iconUrl>https://avatars3.githubusercontent.com/u/9212229?s=64</iconUrl>
+    <licenseUrl>https://github.com/yufeih/Nine.Application/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/yufeih/Nine.Application</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <tags>PCL, Portable, Xamarin, iOS, Android, Windows Phone, Windows Store, UI, Media, GeoLocation</tags>
