@@ -4,9 +4,6 @@
 
     public class AppUITest : AppUISpec<AppUITest>
     {
-        public override IEnumerable<IAppUI> GetData()
-        {
-            yield return new AppUI();
-        }
+        public override IEnumerable<IAppUI> GetData() => new[] { new AppUI() };
     }
 }

@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
     using Android.App;
     using Android.Content;
@@ -36,7 +35,7 @@
         {
             maxImageSize = maxSize;
 
-            var activity = ActivityContext.Current as Activity;
+            var activity = contextFactory() as Activity;
             if (activity == null) return Task.FromResult<Stream>(null);
 
             var root = new Java.IO.File(Android.OS.Environment.ExternalStorageDirectory + "/Captured");
@@ -72,22 +71,23 @@
             return imageChooserTcs.Task;
         }
 
-        public static void SetActivityResult(int requestCode, Result resultCode, Intent data)
+        public void SetActivityResult(int requestCode, Result resultCode, Intent data)
         {
-            if (ActivityContext.Current == null) return;
+            var context = contextFactory();
+            if (context == null) return;
 
             if (requestCode == ImagePickerCode)
             {
                 if (imageChooserTcs == null) return;
                 if (resultCode != Result.Ok) { imageChooserTcs.TrySetResult(null); return; }
 
-                var isCamera = (data != null && data.Action != null && data.Action == Android.Provider.MediaStore.ActionImageCapture);
+                var isCamera = (data != null && data.Action != null && data.Action == MediaStore.ActionImageCapture);
                 var selectedImageUri = (isCamera ? lastPickedImage : (data == null ? null : data.Data)) ?? lastPickedImage;
                 if (selectedImageUri == null) return;
 
-                using (var input = ActivityContext.Current.ContentResolver.OpenInputStream(selectedImageUri))
+                using (var input = context.ContentResolver.OpenInputStream(selectedImageUri))
                 {
-                    var stream = new System.IO.MemoryStream();
+                    var stream = new MemoryStream();
                     var bitmap = BitmapFactory.DecodeStream(input);
                     var size = Crop(bitmap.Width, bitmap.Height, maxImageSize);
                     var resized = Bitmap.CreateScaledBitmap(bitmap, size.Item1, size.Item2, true);
@@ -102,11 +102,12 @@
 
         public async Task SaveImageToLibrary(Stream image, string filename)
         {
-            if (string.IsNullOrEmpty(filename)) throw new ArgumentException("filename");
-            if (ActivityContext.Current == null) return;
+            var context = contextFactory();
+            if (context == null) return;
+            if (string.IsNullOrEmpty(filename)) throw new ArgumentException(nameof(filename));
 
             var bitmap = await BitmapFactory.DecodeStreamAsync(image);
-            MediaStore.Images.Media.InsertImage(ActivityContext.Current.ContentResolver, bitmap, filename, "");
+            MediaStore.Images.Media.InsertImage(context.ContentResolver, bitmap, filename, "");
         }
 
         private bool trimAudioZeros;
