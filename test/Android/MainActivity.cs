@@ -8,8 +8,10 @@ namespace Nine.Application.Android.Test
     {
         protected async override void OnCreate(Bundle bundle)
         {
+            ContextProvider.Current = () => this;
+
             base.OnCreate(bundle);
-            
+
             SetContentView(Resource.Layout.Main);
 
             var test = new AppUITest();

@@ -21,6 +21,7 @@
 
         public static readonly Dictionary<string, Type> KnownTypes = new Dictionary<string, Type>();
 
+        public AppUI() : this(ContextProvider.Current) { }
         public AppUI(Context context) : this(() => context) { }
         public AppUI(Func<Context> contextFactory)
         {
@@ -64,7 +65,11 @@
 
             var dialog = builder.Create();
             dialog.Show();
-            cancellation.Register(() => dialog.Hide());
+            cancellation.Register(() =>
+            {
+                dialog.Hide();
+                tcs.TrySetResult(false);
+            });
             return tcs.Task;
         }
 
@@ -148,7 +153,11 @@
                 .Create();
 
             dialog.Show();
-            cancellation.Register(() => dialog.Hide());
+            cancellation.Register(() =>
+            {
+                dialog.Hide();
+                tcs.TrySetResult(null);
+            });
             return tcs.Task;
         }
 
@@ -160,7 +169,7 @@
             var tcs = new TaskCompletionSource<string>();
             var input = new EditText(context) { Text = defaultText };
             input.SetSingleLine();
-            
+
             var dialog = new AlertDialog.Builder(context)
                 .SetTitle(title)
                 .SetView(input)
@@ -177,7 +186,11 @@
                 .Create();
 
             dialog.Show();
-            cancellation.Register(() => dialog.Hide());
+            cancellation.Register(() =>
+            {
+                dialog.Hide();
+                tcs.TrySetResult(null);
+            });
             return tcs.Task;
         }
 
@@ -228,12 +241,11 @@
             {
                 var canvas = new Canvas(bitmap);
                 view.Draw(canvas);
-                using (var ms = new MemoryStream())
-                {
-                    bitmap.Compress(Bitmap.CompressFormat.Jpeg, 90, ms);
-                    ms.Seek(0, SeekOrigin.Begin);
-                    return Task.FromResult<Stream>(ms);
-                }
+                var ms = new MemoryStream();
+                bitmap.Compress(Bitmap.CompressFormat.Jpeg, 90, ms);
+                ms.Flush();
+                ms.Seek(0, SeekOrigin.Begin);
+                return Task.FromResult<Stream>(ms);
             }
         }
     }

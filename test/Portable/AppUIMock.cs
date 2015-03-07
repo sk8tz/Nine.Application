@@ -22,14 +22,13 @@
         private string input;
         private int? select;
 
-        public AppUIMock(IAppUI ui, IMediaLibrary media, [CallerMemberName]string prefix = null, TimeSpan delay = default(TimeSpan))
+        public AppUIMock(IAppUI ui, [CallerMemberName]string prefix = null, IMediaLibrary media = null, TimeSpan delay = default(TimeSpan))
         {
             if (ui == null) throw new ArgumentNullException(nameof(ui));
-            if (media == null) throw new ArgumentNullException(nameof(media));
 
             this.ui = ui;
             this.prefix = prefix;
-            this.media = media;
+            this.media = media ?? new MediaLibrary();
             this.clientInfo = new ClientInfoProvider();
             this.delay = (delay == default(TimeSpan) ? TimeSpan.FromSeconds(1) : delay);
         }

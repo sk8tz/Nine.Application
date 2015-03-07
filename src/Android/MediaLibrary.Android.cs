@@ -23,6 +23,7 @@
 
         private readonly Func<Context> contextFactory;
 
+        public MediaLibrary() : this(ContextProvider.Current) { }
         public MediaLibrary(Context context) : this(() => context) { }
         public MediaLibrary(Func<Context> contextFactory)
         {
@@ -94,7 +95,7 @@
 
                     if (!resized.Compress(Bitmap.CompressFormat.Jpeg, 80, stream)) return;
 
-                    stream.Seek(0, System.IO.SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
                     imageChooserTcs.TrySetResult(stream);
                 }
             }
@@ -106,8 +107,26 @@
             if (context == null) return;
             if (string.IsNullOrEmpty(filename)) throw new ArgumentException(nameof(filename));
 
+            var root = Android.OS.Environment.ExternalStorageDirectory;
+            var imagePath = System.IO.Path.Combine(root.AbsolutePath, filename);
+            var directory = System.IO.Path.GetDirectoryName(imagePath);
+            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+            var imageFile = new Java.IO.File(imagePath);
+            if (!imageFile.Exists()) imageFile.CreateNewFile();
+
+            using (var file = new Java.IO.FileOutputStream(imageFile))
+            {
+                var bytes = new byte[image.Length];
+                image.Read(bytes, 0, bytes.Length);
+                file.Write(bytes, 0, bytes.Length);
+                file.Flush();
+            }
+
+            image.Seek(0, SeekOrigin.Begin);
             var bitmap = await BitmapFactory.DecodeStreamAsync(image);
-            MediaStore.Images.Media.InsertImage(context.ContentResolver, bitmap, filename, "");
+
+            MediaStore.Images.Media.InsertImage(context.ContentResolver, bitmap, imageFile.Name, "");
+            context.SendBroadcast(new Intent(Intent.ActionMediaScannerScanFile, Android.Net.Uri.Parse("file://" + root)));
         }
 
         private bool trimAudioZeros;
