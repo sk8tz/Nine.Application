@@ -15,7 +15,7 @@ namespace Nine.Application.Android.Test
             SetContentView(Resource.Layout.Main);
 
             var test = new AppUITest();
-            await test.confirm_yes(new AppUI(this));
+            await test.confirm(new AppUI(this));
         }
     }
 }
