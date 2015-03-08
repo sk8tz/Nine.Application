@@ -164,6 +164,10 @@
       <HintPath>C:\Users\yufeih\Source\Repos\Nine.Application\packages\xunit.extensibility.execution.2.0.0-rc3-build2880\lib\wp8\xunit.execution.wp8.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="xunit.runner.utility.wp8, Version=2.0.0.2880, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.runner.utility.2.0.0-rc3-build2880\lib\wp8\xunit.runner.utility.wp8.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WindowsPhone\Nine.Application.WindowsPhone.csproj">

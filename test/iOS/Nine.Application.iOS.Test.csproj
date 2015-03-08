@@ -113,6 +113,10 @@
       <HintPath>C:\Users\yufeih\Source\Repos\Nine.Application\packages\xunit.extensibility.execution.2.0.0-rc3-build2880\lib\Xamarin.iOS\xunit.execution.iOS-Universal.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="xunit.runner.utility.iOS-Universal">
+      <HintPath>C:\Users\yufeih\Source\Repos\Nine.Application\packages\xunit.runner.utility.2.0.0-rc3-build2880\lib\Xamarin.iOS\xunit.runner.utility.iOS-Universal.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Entitlements.plist" />

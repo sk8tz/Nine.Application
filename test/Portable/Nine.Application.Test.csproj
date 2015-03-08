@@ -53,6 +53,10 @@
       <HintPath>..\..\packages\xunit.extensibility.execution.2.0.0-rc3-build2880\lib\Xamarin.iOS\xunit.execution.iOS-Universal.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="xunit.runner.utility.iOS-Universal, Version=2.0.0.2880, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.runner.utility.2.0.0-rc3-build2880\lib\Xamarin.iOS\xunit.runner.utility.iOS-Universal.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Nine.Application.Test.nuspec" />

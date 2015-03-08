@@ -152,6 +152,9 @@
     <Reference Include="xunit.execution.universal">
       <HintPath>..\..\packages\xunit.extensibility.execution.2.0.0-rc3-build2880\lib\portable-wpa81+win81\xunit.execution.universal.dll</HintPath>
     </Reference>
+    <Reference Include="xunit.runner.utility.universal">
+      <HintPath>..\..\packages\xunit.runner.utility.2.0.0-rc3-build2880\lib\portable-wpa81+win81\xunit.runner.utility.universal.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WindowsStore\Nine.Application.WindowsStore.csproj">

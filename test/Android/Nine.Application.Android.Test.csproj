@@ -67,6 +67,10 @@
       <HintPath>C:\Users\yufeih\Source\Repos\Nine.Application\packages\xunit.extensibility.execution.2.0.0-rc3-build2880\lib\monoandroid\xunit.execution.MonoAndroid.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="xunit.runner.utility.MonoAndroid, Version=2.0.0.2880, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.runner.utility.2.0.0-rc3-build2880\lib\monoandroid\xunit.runner.utility.MonoAndroid.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainActivity.cs" />
