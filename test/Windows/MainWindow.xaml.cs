@@ -11,7 +11,7 @@
             Loaded += async (a, b) =>
             {
                 var test = new AppUITest();
-                await test.confirm_yes(new AppUI());
+                await test.confirm(new AppUI());
             };
         }
     }

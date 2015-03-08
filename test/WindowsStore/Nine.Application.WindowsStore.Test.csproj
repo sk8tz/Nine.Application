@@ -149,6 +149,9 @@
     <Reference Include="xunit.core">
       <HintPath>..\..\packages\xunit.extensibility.core.2.0.0-rc3-build2880\lib\portable-net45+aspnetcore50+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
     </Reference>
+    <Reference Include="xunit.execution.universal">
+      <HintPath>..\..\packages\xunit.extensibility.execution.2.0.0-rc3-build2880\lib\portable-wpa81+win81\xunit.execution.universal.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WindowsStore\Nine.Application.WindowsStore.csproj">
