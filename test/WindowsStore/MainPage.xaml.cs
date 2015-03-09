@@ -1,8 +1,12 @@
 ﻿namespace Nine.Application.WindowsStore.Test
 {
+    using System;
+    using System.Reflection;
     using Windows.UI.Xaml.Controls;
+    using Xunit;
+    using Xunit.Abstractions;
 
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage : Page, IMessageSink
     {
         public MainPage()
         {
@@ -10,9 +14,14 @@
 
             Loaded += async (a, b) =>
             {
-                var test = new AppUITest();
-                await test.confirm(new AppUI());
+                await new PortableTestExecutor().RunAll(this, typeof(AppUITest).GetTypeInfo().Assembly);
             };
+        }
+
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            Output.Text = message.ToString();
+            return true;
         }
     }
 }
