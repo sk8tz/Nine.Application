@@ -36,6 +36,8 @@
 
         public async Task SaveImageToLibrary(Stream image, string filename)
         {
+            if (image == null || string.IsNullOrEmpty(filename)) return;
+
             var picturesFolder = KnownFolders.PicturesLibrary;
             var folder = Path.GetDirectoryName(filename);
             if (!string.IsNullOrEmpty(folder))

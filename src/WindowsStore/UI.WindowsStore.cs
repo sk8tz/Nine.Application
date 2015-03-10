@@ -171,6 +171,7 @@
 
         public async Task<Stream> CaptureScreenshot(UIElement element)
         {
+            return null;
             var renderTargetBitmap = new RenderTargetBitmap();
             await renderTargetBitmap.RenderAsync(element);
             var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();

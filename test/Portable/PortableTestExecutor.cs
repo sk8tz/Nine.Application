@@ -33,12 +33,17 @@
             }
         }
 
-        public async Task RunTestCases(IEnumerable<IXunitTestCase> testCases, IAssemblyInfo assemblyInfo, IMessageSink sink = null)
+        public async Task<RunSummary> RunTestCases(IEnumerable<IXunitTestCase> testCases, IAssemblyInfo assemblyInfo, IMessageSink sink = null)
         {
-            using (var runner = new PortableTestAssemblyRunner(new TestAssembly(assemblyInfo), testCases, sink, sink, this))
+            var summary = new RunSummary();
+            var messageBus = new MessageBus(sink);
+            var aggregator = new ExceptionAggregator();
+
+            foreach (var testCase in testCases)
             {
-                await runner.RunAsync();
+                summary.Aggregate(await testCase.RunAsync(sink, messageBus, new object[0], aggregator, new CancellationTokenSource()));
             }
+            return summary;
         }
 
         public void Dispose() { }
@@ -63,19 +68,7 @@
                 return true;
             }
         }
-
-        class PortableTestAssemblyRunner : XunitTestAssemblyRunner
-        {
-            public PortableTestAssemblyRunner(ITestAssembly testAssembly, IEnumerable<IXunitTestCase> testCases, IMessageSink diagnosticMessageSink, IMessageSink executionMessageSink, ITestFrameworkExecutionOptions executionOptions)
-                : base(testAssembly, testCases, diagnosticMessageSink, executionMessageSink, executionOptions)
-            { }
-
-            protected override void SetupSyncContext(int maxParallelThreads)
-            {
-                // Use existing sync context
-            }
-        }
-
+        
         class PortableMessageSink : IMessageSink
         {
             private IMessageSink sink;
