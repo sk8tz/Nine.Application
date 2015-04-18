@@ -21,6 +21,8 @@
         }
 
 #if NETFX_CORE
+        public PlatformName Platform => PlatformName.WindowsStore;
+
         public async Task<ClientInfo> GetAsync()
         {
             var result = new ClientInfo();
@@ -89,6 +91,8 @@
         }
 
 #if WINDOWS_PHONE
+        public PlatformName Platform => PlatformName.WindowsPhone;
+
         public ClientInfo GetClientInfo()
         {
             return new ClientInfo
@@ -109,6 +113,8 @@
             return Microsoft.Phone.Info.DeviceExtendedProperties.TryGetValue("DeviceDeviceUniqueId", out value) && value is byte[] ? Convert.ToBase64String((byte[])value) : "";
         }
 #elif ANDROID
+        public PlatformName Platform => PlatformName.Android;
+
         private readonly Android.Content.Context context;
 
         public ClientInfoProvider(Android.Content.Context context)
@@ -135,6 +141,8 @@
             return result;
         }
 #elif iOS
+        public PlatformName Platform => PlatformName.iOS;
+
         public ClientInfo GetClientInfo()
         {
             return new ClientInfo
@@ -147,6 +155,8 @@
             };
         }
 #elif WINDOWS
+        public PlatformName Platform => PlatformName.Windows;
+
         public ClientInfo GetClientInfo()
         {
             return new ClientInfo
@@ -156,6 +166,8 @@
             };
         }
 #else
+        public PlatformName Platform => PlatformName.Portable;
+
         public ClientInfo GetClientInfo()
         {
             return new ClientInfo { OperatingSystem = PlatformName.Portable };

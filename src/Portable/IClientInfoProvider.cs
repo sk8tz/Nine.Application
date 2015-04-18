@@ -26,6 +26,8 @@
 
     public interface IClientInfoProvider
     {
+        PlatformName Platform { get; }
+
         Task<ClientInfo> GetAsync();
     }
 }

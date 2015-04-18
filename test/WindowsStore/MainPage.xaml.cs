@@ -16,6 +16,7 @@
             {
                 var assembly = typeof(AppUITest).GetTypeInfo().Assembly;
                 var framework = new XunitTestFramework(this);
+                var visitor = new TestMessageVisitor();
                 framework.GetExecutor(assembly.GetName()).RunAll(this, null, null);
             };
         }

@@ -1,41 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Navigation;
 using Microsoft.Phone.Controls;
-using Microsoft.Phone.Shell;
-using Nine.Application.WindowsPhone.Test.Resources;
+using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Nine.Application.WindowsPhone.Test
 {
-    public partial class MainPage : PhoneApplicationPage
+    public partial class MainPage : PhoneApplicationPage, IMessageSink
     {
         // Constructor
         public MainPage()
         {
             InitializeComponent();
 
-            // Sample code to localize the ApplicationBar
-            //BuildLocalizedApplicationBar();
+            var test = new XunitTestFramework(this);
+            var executor = test.GetExecutor(typeof(AppUITest).Assembly.GetName());
+            executor.RunAll(this, TestFrameworkOptions.ForDiscovery(), TestFrameworkOptions.ForExecution());
         }
 
-        // Sample code for building a localized ApplicationBar
-        //private void BuildLocalizedApplicationBar()
-        //{
-        //    // Set the page's ApplicationBar to a new instance of ApplicationBar.
-        //    ApplicationBar = new ApplicationBar();
-
-        //    // Create a new button and set the text value to the localized string from AppResources.
-        //    ApplicationBarIconButton appBarButton = new ApplicationBarIconButton(new Uri("/Assets/AppBar/appbar.add.rest.png", UriKind.Relative));
-        //    appBarButton.Text = AppResources.AppBarButtonText;
-        //    ApplicationBar.Buttons.Add(appBarButton);
-
-        //    // Create a new menu item with the localized string from AppResources.
-        //    ApplicationBarMenuItem appBarMenuItem = new ApplicationBarMenuItem(AppResources.AppBarMenuItemText);
-        //    ApplicationBar.MenuItems.Add(appBarMenuItem);
-        //}
+        public bool OnMessage(IMessageSinkMessage message)
+        {
+            Title = message.ToString();
+            return true;
+        }
     }
 }
