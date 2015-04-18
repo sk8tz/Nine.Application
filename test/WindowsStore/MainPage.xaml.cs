@@ -3,8 +3,8 @@
     using System;
     using System.Reflection;
     using Windows.UI.Xaml.Controls;
+    using Xunit;
     using Xunit.Abstractions;
-    using Xunit.Sdk;
 
     public sealed partial class MainPage : Page, IMessageSink
     {
@@ -12,17 +12,15 @@
         {
             InitializeComponent();
 
-            Loaded += (a, b) =>
+            Loaded += async (a, b) =>
             {
-                var assembly = typeof(AppUITest).GetTypeInfo().Assembly;
-                var framework = new XunitTestFramework(this);
-                var visitor = new TestMessageVisitor();
-                framework.GetExecutor(assembly.GetName()).RunAll(this, null, null);
+                await new PortableTestExecutor().RunAll(this, typeof(AppUITest).GetTypeInfo().Assembly);
             };
         }
 
         public bool OnMessage(IMessageSinkMessage message)
         {
+            Output.Text = message.ToString();
             return true;
         }
     }

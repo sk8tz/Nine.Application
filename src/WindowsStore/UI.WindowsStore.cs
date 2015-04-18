@@ -127,6 +127,8 @@
 
         public Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation)
         {
+            if (LastActionItem == null) return Task.FromResult<string>(null);
+
             var tcs = new TaskCompletionSource<string>();
             var input = new TextBox { FontSize = 16, AcceptsReturn = false };
             var menu = new Flyout { Placement = FlyoutPlacementMode.Bottom };
@@ -169,6 +171,7 @@
 
         public async Task<Stream> CaptureScreenshot(UIElement element)
         {
+            return null;
             var renderTargetBitmap = new RenderTargetBitmap();
             await renderTargetBitmap.RenderAsync(element);
             var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();

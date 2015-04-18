@@ -8,5 +8,6 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <TextBlock Name="Output" Text="Loading Tests..." FontSize="32" FontFamily="Consolas" Foreground="Gray" />
     </Grid>
 </Page>
