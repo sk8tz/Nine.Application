@@ -44,6 +44,8 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Base32.cs" />
     <Compile Include="GeoLocation.cs" />
+    <Compile Include="AppBundle.cs" />
+    <Compile Include="IAppBundle.cs" />
     <Compile Include="IClientInfoProvider.cs" />
     <Compile Include="AppUI.cs" />
     <Compile Include="LocalizedText.cs" />
