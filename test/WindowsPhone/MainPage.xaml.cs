@@ -12,10 +12,6 @@ namespace Nine.Application.WindowsPhone.Test
         public MainPage()
         {
             InitializeComponent();
-
-            var test = new XunitTestFramework(this);
-            var executor = test.GetExecutor(typeof(AppUITest).Assembly.GetName());
-            executor.RunAll(this, TestFrameworkOptions.ForDiscovery(), TestFrameworkOptions.ForExecution());
         }
 
         public bool OnMessage(IMessageSinkMessage message)
