@@ -12,10 +12,17 @@
 #if WINDOWS_PHONE || NETFX_CORE
         public async Task<Stream> Get(string filename)
         {
-            var uri = new Uri("ms-appx:///" + filename);
-            var file = await Windows.Storage.StorageFile.GetFileFromApplicationUriAsync(uri);
-            if (file == null) return null;
-            return await file.OpenStreamForReadAsync();
+            try
+            {
+                var location = Windows.ApplicationModel.Package.Current.InstalledLocation;
+                var file = await location.GetFileAsync(filename.Replace("/", "\\"));
+                if (file == null) return null;
+                return await file.OpenStreamForReadAsync();
+            }
+            catch
+            {
+                return null;
+            }
         }
 #elif ANDROID
         private readonly Android.Content.Context context;

@@ -7,19 +7,6 @@
 
     public class ClientInfoProvider : IClientInfoProvider
     {
-        public static string ClientVersion = GetVersion(typeof(ClientInfoProvider).GetTypeInfo().Assembly);
-        public static string GetVersion(Assembly assembly)
-        {
-            try
-            {
-                return assembly.GetCustomAttribute<AssemblyFileVersionAttribute>().Version ?? "";
-            }
-            catch
-            {
-                return "";
-            }
-        }
-
 #if NETFX_CORE
         public PlatformName Platform => PlatformName.WindowsStore;
 
