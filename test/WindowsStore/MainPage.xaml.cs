@@ -11,11 +11,6 @@
         public MainPage()
         {
             InitializeComponent();
-
-            Loaded += async (a, b) =>
-            {
-                await new PortableTestExecutor().RunAll(this, typeof(AppUITest).GetTypeInfo().Assembly);
-            };
         }
 
         public bool OnMessage(IMessageSinkMessage message)
