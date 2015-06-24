@@ -7,12 +7,6 @@
         public MainWindow()
         {
             InitializeComponent();
-
-            Loaded += async (a, b) =>
-            {
-                var test = new AppUITest();
-                await test.confirm(new AppUI());
-            };
         }
     }
 }
