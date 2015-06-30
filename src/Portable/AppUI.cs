@@ -89,7 +89,7 @@
         public virtual Task<bool> Confirm(string title, string message, string yes, string no = null, CancellationToken cancellation = default(CancellationToken)) => Task.FromResult(false);
         public virtual Task<bool> Notify(string title, string message, IDictionary<string, string> args = null, CancellationToken cancellation = default(CancellationToken)) => Task.FromResult(false);
         public virtual Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation = default(CancellationToken)) => Task.FromResult<int?>(null);
-        public virtual Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation = default(CancellationToken)) => Task.FromResult<string>(null);
+        public virtual Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation = default(CancellationToken)) => Task.FromResult<string>(null);
         public virtual Task<Stream> CaptureScreenshot() => Task.FromResult<Stream>(null);
         public virtual void Toast(string title, string message) { }
         public virtual void CopyToClipboard(string text) { }

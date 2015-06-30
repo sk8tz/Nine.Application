@@ -161,15 +161,21 @@
             return tcs.Task;
         }
 
-        public virtual Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation)
+        public virtual Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation)
         {
             var context = contextFactory();
             if (context == null) return Task.FromResult("");
 
             var tcs = new TaskCompletionSource<string>();
             var input = new EditText(context) { Text = defaultText };
-            input.SetSingleLine();
 
+            if (password)
+            {
+                input.InputType = InputTypes.ClassText | InputTypes.TextVariationPassword;
+            }
+
+            input.SetSingleLine();
+            
             var dialog = new AlertDialog.Builder(context)
                 .SetTitle(title)
                 .SetView(input)

@@ -14,7 +14,7 @@
 
         Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation = default(CancellationToken));
 
-        Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation = default(CancellationToken));
+        Task<string> Input(string title, string defaultText, string yes, bool password = false, CancellationToken cancellation = default(CancellationToken));
 
         Task<Stream> CaptureScreenshot();
 

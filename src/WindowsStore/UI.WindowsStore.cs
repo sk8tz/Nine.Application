@@ -125,7 +125,7 @@
             return null;
         }
 
-        public Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation)
+        public Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation)
         {
             if (LastActionItem == null) return Task.FromResult<string>(null);
 

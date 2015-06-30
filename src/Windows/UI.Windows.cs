@@ -24,7 +24,7 @@
             throw new NotImplementedException();
         }
 
-        public Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation = default(CancellationToken))
+        public Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation = default(CancellationToken))
         {
             throw new NotImplementedException();
         }

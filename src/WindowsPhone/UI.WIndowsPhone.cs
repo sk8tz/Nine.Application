@@ -83,7 +83,7 @@
             return await tcs.Task;
         }
 
-        public Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation)
+        public Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation)
         {
             var tcs = new TaskCompletionSource<string>();
             var prompt = new InputPrompt { Title = title, Value = defaultText };

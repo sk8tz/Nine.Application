@@ -54,7 +54,7 @@
             return tcs.Task;
         }
 
-        public virtual Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation)
+        public virtual Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation)
         {
             var tcs = new TaskCompletionSource<string>();
             var view = new UIAlertView(title, "", null, yes) { TintColor = UIWindow.Appearance.TintColor };
