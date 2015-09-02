@@ -54,11 +54,11 @@
             return confirm;
         }
 
-        public async Task<string> Input(string title, string defaultText, string yes, CancellationToken cancellation = default(CancellationToken))
+        public async Task<string> Input(string title, string defaultText, string yes, bool password = false, CancellationToken cancellation = default(CancellationToken))
         {
             try
             {
-                await ui.Input(title, defaultText, yes, DelayCancellation(cancellation));
+                await ui.Input(title, defaultText, yes, password, DelayCancellation(cancellation));
             }
             catch (TaskCanceledException) { }
             return input;

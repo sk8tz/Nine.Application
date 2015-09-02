@@ -13,6 +13,7 @@
     using Android.Text;
     using Android.Views;
     using Android.Widget;
+    using Android.Text.Method;
 
     public partial class AppUI : IAppUI
     {
@@ -169,13 +170,14 @@
             var tcs = new TaskCompletionSource<string>();
             var input = new EditText(context) { Text = defaultText };
 
+            input.SetSingleLine();
+
             if (password)
             {
                 input.InputType = InputTypes.ClassText | InputTypes.TextVariationPassword;
+                input.TransformationMethod = PasswordTransformationMethod.Instance;
             }
 
-            input.SetSingleLine();
-            
             var dialog = new AlertDialog.Builder(context)
                 .SetTitle(title)
                 .SetView(input)
@@ -214,7 +216,7 @@
             var context = contextFactory();
             if (context == null) return;
 
-            ((ClipboardManager)context.GetSystemService(Context.ClipboardService)).Text = text;
+            ((Android.Content.ClipboardManager)context.GetSystemService(Context.ClipboardService)).Text = text;
         }
 
         public virtual void Browse(string url)
