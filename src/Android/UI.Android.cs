@@ -203,6 +203,15 @@
                 }
             };
 
+            input.FocusChange += (sender, e) =>
+            {
+                if (e.HasFocus)
+                {
+                    input.SelectAll();
+                    dialog.Window.SetSoftInputMode(SoftInput.StateAlwaysVisible);
+                }
+            };
+
             dialog.Show();
             cancellation.Register(() =>
             {
