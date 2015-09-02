@@ -193,6 +193,16 @@
                 }))
                 .Create();
 
+            input.EditorAction += (sender, e) =>
+            {
+                if (e.Event == null || e.Event.KeyCode == Keycode.Enter)
+                {
+                    var text = input.Text;
+                    dialog.Dismiss();
+                    tcs.TrySetResult(text);
+                }
+            };
+
             dialog.Show();
             cancellation.Register(() =>
             {
