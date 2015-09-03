@@ -18,8 +18,10 @@
         private const int ImagePickerCode = 90001;
 
         private static TaskCompletionSource<Stream> imageChooserTcs;
-        private static Android.Net.Uri lastPickedImage;
-        private static int maxImageSize;
+
+        private int _maxSize;
+        private Android.Net.Uri _imagePath;
+        private Android.Net.Uri _compressedPath;
 
         private readonly Func<Context> contextFactory;
 
@@ -34,15 +36,11 @@
 
         public Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue)
         {
-            maxImageSize = maxSize;
-
             var activity = contextFactory() as Activity;
             if (activity == null) return Task.FromResult<Stream>(null);
 
-            var root = new Java.IO.File(Android.OS.Environment.ExternalStorageDirectory + "/Captured");
-            root.Mkdirs();
-
-            lastPickedImage = Android.Net.Uri.FromFile(new Java.IO.File(root, Guid.NewGuid().ToString("N") + ".jpg"));
+            var imagePath = Java.IO.File.CreateTempFile("nine", ".jpg");
+            var compressedPath = Java.IO.File.CreateTempFile("nine", ".jpg");
 
             // File system.
             var galleryIntent = new Intent();
@@ -61,11 +59,15 @@
                     var intent = new Intent(captureIntent);
                     intent.SetComponent(new ComponentName(res.ActivityInfo.PackageName, res.ActivityInfo.Name));
                     intent.SetPackage(res.ActivityInfo.PackageName);
-                    intent.PutExtra(MediaStore.ExtraOutput, lastPickedImage);
+                    intent.PutExtra(MediaStore.ExtraOutput, imagePath);
                     cameraIntents.Add(intent);
                 }
                 chooserIntent.PutExtra(Intent.ExtraInitialIntents, cameraIntents.Cast<IParcelable>().ToArray());
             }
+
+            _maxSize = maxSize;
+            _imagePath = Android.Net.Uri.FromFile(imagePath);
+            _compressedPath = Android.Net.Uri.FromFile(compressedPath);
 
             imageChooserTcs = new TaskCompletionSource<Stream>();
             activity.StartActivityForResult(chooserIntent, ImagePickerCode);
@@ -83,21 +85,32 @@
                 if (resultCode != Result.Ok) { imageChooserTcs.TrySetResult(null); return; }
 
                 var isCamera = (data != null && data.Action != null && data.Action == MediaStore.ActionImageCapture);
-                var selectedImageUri = (isCamera ? lastPickedImage : (data == null ? null : data.Data)) ?? lastPickedImage;
+                
+                var selectedImageUri = (isCamera ? _imagePath : (data == null ? null : data.Data));
                 if (selectedImageUri == null) return;
 
                 using (var input = context.ContentResolver.OpenInputStream(selectedImageUri))
+                using (var output = context.ContentResolver.OpenOutputStream(_compressedPath, "w"))
+                using (var bitmap = BitmapFactory.DecodeStream(input))
                 {
-                    var stream = new MemoryStream();
-                    var bitmap = BitmapFactory.DecodeStream(input);
-                    var size = Crop(bitmap.Width, bitmap.Height, maxImageSize);
-                    var resized = Bitmap.CreateScaledBitmap(bitmap, size.Item1, size.Item2, true);
-
-                    if (!resized.Compress(Bitmap.CompressFormat.Jpeg, 80, stream)) return;
-
-                    stream.Seek(0, SeekOrigin.Begin);
-                    imageChooserTcs.TrySetResult(stream);
+                    var size = Crop(bitmap.Width, bitmap.Height, _maxSize);
+                    using (var resized = Bitmap.CreateScaledBitmap(bitmap, size.Item1, size.Item2, true))
+                    {
+                        if (!resized.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
+                        {
+                            imageChooserTcs.TrySetResult(null);
+                            return;
+                        }
+                    }
                 }
+
+                new Java.IO.File(selectedImageUri.Path).Delete();
+
+                var compressed = _compressedPath;
+
+                imageChooserTcs.TrySetResult(new DelegateStream(
+                    () => context.ContentResolver.OpenInputStream(compressed),
+                    () => new Java.IO.File(compressed.Path).Delete()));
             }
         }
 
