@@ -66,7 +66,7 @@
             Notify(title, message, false, CancellationToken.None);
         }
 
-        public Task<bool> Notify(string title, string message, IDictionary<string, string> args, CancellationToken cancellation)
+        public Task<bool> Notify(string title, string message, CancellationToken cancellation)
         {
             return Notify(title, message, true, cancellation);
         }

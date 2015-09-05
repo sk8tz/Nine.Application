@@ -14,7 +14,7 @@
             return Task.FromResult(MessageBox.Show(message, title, no != null ? MessageBoxButton.OKCancel : MessageBoxButton.OK) == MessageBoxResult.OK);
         }
 
-        public Task<bool> Notify(string title, string message, IDictionary<string, string> args = null, CancellationToken cancellation = default(CancellationToken))
+        public Task<bool> Notify(string title, string message = null, CancellationToken cancellation = default(CancellationToken))
         {
             return Task.FromResult(false);
         }

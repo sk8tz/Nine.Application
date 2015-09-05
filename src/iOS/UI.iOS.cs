@@ -24,10 +24,10 @@
 
         public virtual void Toast(string title, string message)
         {
-            Notify(title, message, null, CancellationToken.None);
+            Notify(title, message, CancellationToken.None);
         }
 
-        public virtual Task<bool> Notify(string title, string message, IDictionary<string, string> args, CancellationToken cancellation)
+        public virtual Task<bool> Notify(string title, string message, CancellationToken cancellation)
         {
             return Task.FromResult(false);
         }

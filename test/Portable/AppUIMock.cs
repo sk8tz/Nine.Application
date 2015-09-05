@@ -64,11 +64,11 @@
             return input;
         }
 
-        public async Task<bool> Notify(string title, string message, IDictionary<string, string> args = null, CancellationToken cancellation = default(CancellationToken))
+        public async Task<bool> Notify(string title, string message, CancellationToken cancellation = default(CancellationToken))
         {
             try
             {
-                await ui.Notify(title, message, args, DelayCancellation(cancellation));
+                await ui.Notify(title, message, DelayCancellation(cancellation));
             }
             catch (TaskCanceledException) { }
             return notify;

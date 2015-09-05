@@ -42,10 +42,10 @@
 
         public void Toast(string title, string message)
         {
-            Notify(title, message, null, CancellationToken.None);
+            Notify(title, message, CancellationToken.None);
         }
 
-        public Task<bool> Notify(string title, string message, IDictionary<string, string> args, CancellationToken cancellation)
+        public Task<bool> Notify(string title, string message, CancellationToken cancellation)
         {
             // TODO: we don't support deep link on windows phone
 

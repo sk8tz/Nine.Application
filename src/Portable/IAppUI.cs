@@ -10,7 +10,7 @@
     {
         Task<bool> Confirm(string title, string message, string yes, string no = null, CancellationToken cancellation = default(CancellationToken));
 
-        Task<bool> Notify(string title, string message, IDictionary<string, string> args = null, CancellationToken cancellation = default(CancellationToken));
+        Task<bool> Notify(string title, string message = null, CancellationToken cancellation = default(CancellationToken));
 
         Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation = default(CancellationToken));
 
