@@ -38,9 +38,14 @@
         {
             var activity = contextFactory() as Activity;
             if (activity == null) return Task.FromResult<Stream>(null);
+            
+            var root = new Java.IO.File(Android.OS.Environment.ExternalStorageDirectory + "/Captured");
+            root.Mkdirs();
 
-            var imagePath = Java.IO.File.CreateTempFile("nine", ".jpg");
-            var compressedPath = Java.IO.File.CreateTempFile("nine", ".jpg");
+            _imagePath = Android.Net.Uri.FromFile(new Java.IO.File(root, Guid.NewGuid().ToString("N") + ".jpg"));
+            _compressedPath = Android.Net.Uri.FromFile(new Java.IO.File(root, Guid.NewGuid().ToString("N") + ".jpg"));
+
+            _maxSize = maxSize;
 
             // File system.
             var galleryIntent = new Intent();
@@ -59,15 +64,11 @@
                     var intent = new Intent(captureIntent);
                     intent.SetComponent(new ComponentName(res.ActivityInfo.PackageName, res.ActivityInfo.Name));
                     intent.SetPackage(res.ActivityInfo.PackageName);
-                    intent.PutExtra(MediaStore.ExtraOutput, imagePath);
+                    intent.PutExtra(MediaStore.ExtraOutput, _imagePath);
                     cameraIntents.Add(intent);
                 }
                 chooserIntent.PutExtra(Intent.ExtraInitialIntents, cameraIntents.Cast<IParcelable>().ToArray());
             }
-
-            _maxSize = maxSize;
-            _imagePath = Android.Net.Uri.FromFile(imagePath);
-            _compressedPath = Android.Net.Uri.FromFile(compressedPath);
 
             imageChooserTcs = new TaskCompletionSource<Stream>();
             activity.StartActivityForResult(chooserIntent, ImagePickerCode);
@@ -82,12 +83,16 @@
             if (requestCode == ImagePickerCode)
             {
                 if (imageChooserTcs == null) return;
-                if (resultCode != Result.Ok) { imageChooserTcs.TrySetResult(null); return; }
+                if (resultCode != Result.Ok)
+                {
+                    imageChooserTcs.TrySetResult(null); return;
+                }
 
-                var isCamera = (data != null && data.Action != null && data.Action == MediaStore.ActionImageCapture);
-                
-                var selectedImageUri = (isCamera ? _imagePath : (data == null ? null : data.Data));
-                if (selectedImageUri == null) return;
+                var selectedImageUri = data?.Data ?? _imagePath;
+                if (selectedImageUri == null)
+                {
+                    imageChooserTcs.TrySetResult(null); return;
+                }
 
                 using (var input = context.ContentResolver.OpenInputStream(selectedImageUri))
                 using (var output = context.ContentResolver.OpenOutputStream(_compressedPath, "w"))
