@@ -16,16 +16,16 @@
     using Android.Text.Method;
 
     [Activity]
-    class RedirectActivity : Activity
+    class NotificationRedirectActivity : Activity
     {
-        public RedirectActivity()
+        public NotificationRedirectActivity()
         {
+            Finish();
+
             if (AppUI._notificationTcs != null)
             {
                 AppUI._notificationTcs.TrySetResult(true);
             }
-
-            Finish();
         }
     }
 
@@ -123,11 +123,11 @@
 
             if (_notificationTcs != null)
             {
-                _notificationTcs.SetResult(false);
+                _notificationTcs.TrySetResult(false);
             }
             _notificationTcs = new TaskCompletionSource<bool>();
 
-            var intent = new Intent(context, typeof(RedirectActivity));
+            var intent = new Intent(context, typeof(NotificationRedirectActivity));
 
             intent.SetFlags(ActivityFlags.ReorderToFront);
 
