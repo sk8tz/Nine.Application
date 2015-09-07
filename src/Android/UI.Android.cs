@@ -18,10 +18,15 @@
     [Activity]
     class NotificationRedirectActivity : Activity
     {
-        public NotificationRedirectActivity()
+        protected override void OnStart()
         {
+            base.OnStart();
             Finish();
+        }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
             if (AppUI._notificationTcs != null)
             {
                 AppUI._notificationTcs.TrySetResult(true);
