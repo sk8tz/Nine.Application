@@ -33,6 +33,8 @@
     {
         private const int NotificationCode = 90002;
 
+        private int lastNotificationId;
+
         private readonly Func<Context> _contextFactory;
 
         private DateTime _lastNotificationTime;
@@ -141,15 +143,17 @@
 
             manager.Notify(NotificationCode, builder.Build());
 
-            return _notificationTcs.Task;
-        }
+            var notificationId = ++lastNotificationId;
 
-        public void ClearNotifications()
-        {
-            var context = _contextFactory();
-            if (context == null) return;
-            var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
-            manager.Cancel(NotificationCode);
+            cancellation.Register(() =>
+            {
+                if (notificationId == lastNotificationId)
+                {
+                    manager.Cancel(NotificationCode);
+                }
+            });
+
+            return _notificationTcs.Task;
         }
 
         public virtual Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation)
