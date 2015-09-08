@@ -46,6 +46,9 @@
 
         internal static TaskCompletionSource<bool> _notificationTcs;
 
+        public int? SmallIcon { get; set; }
+        public int? LargeIcon { get; set; }
+
         public AppUI() : this(ContextProvider.Current) { }
         public AppUI(Context context) : this(() => context) { }
         public AppUI(Func<Context> contextFactory)
@@ -117,11 +120,23 @@
             message = message ?? "";
 
             var packageName = context.PackageName;
-            var icon = context.Resources.GetIdentifier("icon", "drawable", packageName);
+            var icon = SmallIcon ?? context.Resources.GetIdentifier("icon", "drawable", packageName);
+
+            var iconBitmap = BitmapFactory.DecodeResource(context.Resources, LargeIcon ?? icon);
+            var width = (int)context.Resources.GetDimension(Android.Resource.Dimension.NotificationLargeIconWidth);
+            var height = (int)context.Resources.GetDimension(Android.Resource.Dimension.NotificationLargeIconHeight);
+
+            if (iconBitmap.Width != width || iconBitmap.Height != height)
+            {
+                var largeIconBitmap = Bitmap.CreateScaledBitmap(iconBitmap, width, height, true);
+                iconBitmap.Dispose();
+                iconBitmap = largeIconBitmap;
+            }
 
             var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
             var builder = new NotificationCompat.Builder(context)
                 .SetSmallIcon(icon)
+                .SetLargeIcon(iconBitmap)
                 .SetContentTitle(title)
                 .SetContentText(message)
                 .SetTicker(message);
