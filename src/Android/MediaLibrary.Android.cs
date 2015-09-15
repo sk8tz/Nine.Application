@@ -161,6 +161,13 @@
             WriteWavHeader(audioCaptureStream, DefaultAudioSamplingRate);
 
             recorder = new AudioRecord(AudioSource.Mic, DefaultAudioSamplingRate, ChannelIn.Mono, Encoding.Pcm16bit, audioBuffer.Length);
+
+            if (recorder.State != State.Initialized)
+            {
+                recorder = null;
+                return;
+            }
+
             recorder.StartRecording();
             trimAudioZeros = true;
 
@@ -171,7 +178,7 @@
         {
             while (recorder != null)
             {
-                // Ensure ew are on the UI thread.
+                // Ensure we are on the UI thread.
                 var read = await recorder.ReadAsync(audioBuffer, 0, audioBuffer.Length);
                 if (read > 0)
                 {
