@@ -27,16 +27,18 @@
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            if (AppUI._notificationTcs != null)
+            if (AppUI._notificationTcs != null &&
+                AppUI._notificationTcs.TrySetResult(true))
             {
-                AppUI._notificationTcs.TrySetResult(true);
+                var manager = (NotificationManager)GetSystemService(NotificationService);
+                manager.Cancel(AppUI.NotificationCode);
             }
         }
     }
 
     public partial class AppUI : IAppUI
     {
-        private const int NotificationCode = 90002;
+        internal const int NotificationCode = 90002;
 
         private int lastNotificationId;
 
