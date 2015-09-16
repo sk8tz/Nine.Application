@@ -27,6 +27,7 @@
         protected override void OnDestroy()
         {
             base.OnDestroy();
+
             if (AppUI._notificationTcs != null &&
                 AppUI._notificationTcs.TrySetResult(true))
             {
@@ -123,22 +124,10 @@
 
             var packageName = context.PackageName;
             var icon = SmallIcon ?? context.Resources.GetIdentifier("icon", "drawable", packageName);
-
-            var iconBitmap = BitmapFactory.DecodeResource(context.Resources, LargeIcon ?? icon);
-            var width = (int)context.Resources.GetDimension(Android.Resource.Dimension.NotificationLargeIconWidth);
-            var height = (int)context.Resources.GetDimension(Android.Resource.Dimension.NotificationLargeIconHeight);
-
-            if (iconBitmap.Width != width || iconBitmap.Height != height)
-            {
-                var largeIconBitmap = Bitmap.CreateScaledBitmap(iconBitmap, width, height, true);
-                iconBitmap.Dispose();
-                iconBitmap = largeIconBitmap;
-            }
-
+            
             var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
             var builder = new NotificationCompat.Builder(context)
                 .SetSmallIcon(icon)
-                .SetLargeIcon(iconBitmap)
                 .SetContentTitle(title)
                 .SetContentText(message)
                 .SetTicker(message);
@@ -163,7 +152,25 @@
                 builder.SetDefaults((int)(NotificationDefaults.Sound));
             }
 
-            manager.Notify(NotificationCode, builder.Build());
+            var notification = builder.Build();
+            if (LargeIcon.HasValue)
+            {
+                var iconBitmap = BitmapFactory.DecodeResource(context.Resources, LargeIcon.Value);
+                var width = (int)context.Resources.GetDimension(Android.Resource.Dimension.NotificationLargeIconWidth);
+                var height = (int)context.Resources.GetDimension(Android.Resource.Dimension.NotificationLargeIconHeight);
+
+                if (iconBitmap.Width != width || iconBitmap.Height != height)
+                {
+                    var largeIconBitmap = Bitmap.CreateScaledBitmap(iconBitmap, width, height, true);
+                    iconBitmap.Dispose();
+                    iconBitmap = largeIconBitmap;
+                }
+
+                // http://stackoverflow.com/questions/13847297/notificationcompat-4-1-setsmallicon-and-setlargeicon
+                notification.ContentView.SetImageViewBitmap(Android.Resource.Id.Icon, iconBitmap);
+            }
+
+            manager.Notify(NotificationCode, notification);
 
             var notificationId = ++lastNotificationId;
 
