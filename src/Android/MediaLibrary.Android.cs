@@ -109,7 +109,10 @@
                     }
                 }
 
-                new Java.IO.File(selectedImageUri.Path).Delete();
+                if (_imagePath == selectedImageUri)
+                {
+                    new Java.IO.File(selectedImageUri.Path).Delete();
+                }
 
                 var compressed = _compressedPath;
 
