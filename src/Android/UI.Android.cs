@@ -117,20 +117,20 @@
         {
             var context = _contextFactory();
             if (context == null) return Task.FromResult(false);
-            if (!string.IsNullOrEmpty(title)) message = title + ": " + message;
 
             title = title ?? "";
             message = message ?? "";
 
             var packageName = context.PackageName;
             var icon = SmallIcon ?? context.Resources.GetIdentifier("icon", "drawable", packageName);
-            
+            var ticker = string.IsNullOrEmpty(title) ? message : title + ": " + message;
+
             var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
             var builder = new NotificationCompat.Builder(context)
                 .SetSmallIcon(icon)
                 .SetContentTitle(title)
                 .SetContentText(message)
-                .SetTicker(message);
+                .SetTicker(ticker);
 
             if (_notificationTcs != null)
             {
