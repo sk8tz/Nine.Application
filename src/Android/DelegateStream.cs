@@ -19,8 +19,8 @@
             set { _stream.Position = value; }
         }
 
+        public override bool CanSeek => true;
         public override bool CanRead => _stream.CanRead;
-        public override bool CanSeek => _stream.CanSeek;
         public override bool CanWrite => _stream.CanWrite;
         public override long Length => _stream.Length;
 
