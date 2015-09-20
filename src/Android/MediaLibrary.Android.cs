@@ -38,8 +38,8 @@
         {
             var activity = contextFactory() as Activity;
             if (activity == null) return Task.FromResult<Stream>(null);
-            
-            var root = new Java.IO.File(Android.OS.Environment.ExternalStorageDirectory + "/Captured");
+
+            var root = new Java.IO.File(Android.OS.Environment.ExternalStorageDirectory + "/temp");
             root.Mkdirs();
 
             _imagePath = Android.Net.Uri.FromFile(new Java.IO.File(root, Guid.NewGuid().ToString("N") + ".jpg"));
@@ -111,11 +111,6 @@
                         }
                     }
 
-                    if (_imagePath == selectedImageUri)
-                    {
-                        new Java.IO.File(selectedImageUri.Path).Delete();
-                    }
-
                     var compressed = _compressedPath;
 
                     imageChooserTcs.TrySetResult(new DelegateStream(
@@ -125,7 +120,13 @@
                 catch
                 {
                     imageChooserTcs.TrySetResult(null);
-                    return;
+                }
+                finally
+                {
+                    if (_imagePath == selectedImageUri)
+                    {
+                        new Java.IO.File(selectedImageUri.Path).Delete();
+                    }
                 }
             }
         }

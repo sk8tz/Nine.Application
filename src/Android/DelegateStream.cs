@@ -33,15 +33,17 @@
         {
             try
             {
-                return _stream.Seek(offset, origin);
+                if (_stream.CanSeek)
+                {
+                    return _stream.Seek(offset, origin);
+                }
             }
-            catch (NotSupportedException) when (offset == 0 && origin == SeekOrigin.Begin)
-            {
-                _stream.Dispose();
-                _stream = _open();
+            catch (NotSupportedException) when (offset == 0 && origin == SeekOrigin.Begin) { }
 
-                return 0;
-            }
+            _stream.Dispose();
+            _stream = _open();
+
+            return 0;
         }
 
         protected override void Dispose(bool disposing)
