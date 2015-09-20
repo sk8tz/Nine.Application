@@ -8,51 +8,51 @@
 
     partial class Geolocator
     {
-        private readonly GeoLocationProvider provider;
+        private readonly GeoLocationProvider _provider;
 
         public Geolocator(Context context) : this(() => context) { }
         public Geolocator(Func<Context> contextFactory)
         {
-            this.provider = new GeoLocationProvider(contextFactory);
+            _provider = new GeoLocationProvider(contextFactory);
         }
 
         public async Task<GeoLocation> FindAsync()
         {
-            var point = await provider.FindAsync();
+            var point = await _provider.FindAsync();
             if (point == null) return null;
             return new GeoLocation { Altitude = point.Altitude, Latitude = point.Latitude, Longitude = point.Longitude };
         }
 
         class GeoLocationProvider : Java.Lang.Object, ILocationListener
         {
-            private readonly LocationManager location;
-            private TaskCompletionSource<Location> completion;
+            private readonly LocationManager _location;
+            private TaskCompletionSource<Location> _completion;
 
             public GeoLocationProvider(Func<Context> contextFactory)
             {
-                this.location = contextFactory().GetSystemService(Context.LocationService) as LocationManager;
+                _location = contextFactory().GetSystemService(Context.LocationService) as LocationManager;
             }
 
             public Task<Location> FindAsync()
             {
-                if (location == null) return Task.FromResult<Location>(null);
+                if (_location == null) return Task.FromResult<Location>(null);
 
-                var lastKnownGps = location.GetLastKnownLocation(LocationManager.GpsProvider);
-                var lastKnownNet = location.GetLastKnownLocation(LocationManager.NetworkProvider);
+                var lastKnownGps = _location.GetLastKnownLocation(LocationManager.GpsProvider);
+                var lastKnownNet = _location.GetLastKnownLocation(LocationManager.NetworkProvider);
 
                 var validSince = DateTime.UtcNow.AddHours(-8);
                 if (lastKnownGps != null && ToDateTime(lastKnownGps.Time) > validSince) return Task.FromResult(lastKnownGps);
                 if (lastKnownNet != null && ToDateTime(lastKnownNet.Time) > validSince) return Task.FromResult(lastKnownNet);
 
-                completion = new TaskCompletionSource<Location>();
-                location.RequestLocationUpdates(LocationManager.GpsProvider, 0, 0, this);
-                return completion.Task;
+                _completion = new TaskCompletionSource<Location>();
+                _location.RequestLocationUpdates(LocationManager.GpsProvider, 0, 0, this);
+                return _completion.Task;
             }
 
             public void OnLocationChanged(Location point)
             {
-                location.RemoveUpdates(this);
-                completion.SetResult(point);
+                _location.RemoveUpdates(this);
+                _completion.TrySetResult(point);
             }
 
             public void OnProviderDisabled(string provider)

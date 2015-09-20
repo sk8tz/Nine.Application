@@ -94,31 +94,39 @@
                     imageChooserTcs.TrySetResult(null); return;
                 }
 
-                using (var input = context.ContentResolver.OpenInputStream(selectedImageUri))
-                using (var output = context.ContentResolver.OpenOutputStream(_compressedPath, "w"))
-                using (var bitmap = BitmapFactory.DecodeStream(input))
+                try
                 {
-                    var size = Crop(bitmap.Width, bitmap.Height, _maxSize);
-                    using (var resized = Bitmap.CreateScaledBitmap(bitmap, size.Item1, size.Item2, true))
+                    using (var input = context.ContentResolver.OpenInputStream(selectedImageUri))
+                    using (var output = context.ContentResolver.OpenOutputStream(_compressedPath, "w"))
+                    using (var bitmap = BitmapFactory.DecodeStream(input))
                     {
-                        if (!resized.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
+                        var size = Crop(bitmap.Width, bitmap.Height, _maxSize);
+                        using (var resized = Bitmap.CreateScaledBitmap(bitmap, size.Item1, size.Item2, true))
                         {
-                            imageChooserTcs.TrySetResult(null);
-                            return;
+                            if (!resized.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
+                            {
+                                imageChooserTcs.TrySetResult(null);
+                                return;
+                            }
                         }
                     }
-                }
 
-                if (_imagePath == selectedImageUri)
+                    if (_imagePath == selectedImageUri)
+                    {
+                        new Java.IO.File(selectedImageUri.Path).Delete();
+                    }
+
+                    var compressed = _compressedPath;
+
+                    imageChooserTcs.TrySetResult(new DelegateStream(
+                        () => context.ContentResolver.OpenInputStream(compressed),
+                        () => new Java.IO.File(compressed.Path).Delete()));
+                }
+                catch
                 {
-                    new Java.IO.File(selectedImageUri.Path).Delete();
+                    imageChooserTcs.TrySetResult(null);
+                    return;
                 }
-
-                var compressed = _compressedPath;
-
-                imageChooserTcs.TrySetResult(new DelegateStream(
-                    () => context.ContentResolver.OpenInputStream(compressed),
-                    () => new Java.IO.File(compressed.Path).Delete()));
             }
         }
 
