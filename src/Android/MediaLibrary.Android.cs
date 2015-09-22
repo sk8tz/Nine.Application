@@ -165,7 +165,7 @@
         private byte[] audioBuffer = new Byte[10240];
         private static readonly string recorderFile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments) + "LastRecorded.wav";
 
-        public async void BeginCaptureAudio()
+        public void BeginCaptureAudio()
         {
             if (recorder != null) recorder.Dispose();
 
@@ -183,21 +183,25 @@
             recorder.StartRecording();
             trimAudioZeros = true;
 
-            await ReadAudioBufferAsync();
+            ReadAudioBufferAsync();
         }
 
-        private async Task ReadAudioBufferAsync()
+        private async void ReadAudioBufferAsync()
         {
-            while (recorder != null)
+            try
             {
-                // Ensure we are on the UI thread.
-                var read = await recorder.ReadAsync(audioBuffer, 0, audioBuffer.Length);
-                if (read > 0)
+                while (recorder != null)
                 {
-                    var offset = TrimAudioZeros(read);
-                    if (read > offset) audioCaptureStream.Write(audioBuffer, offset, read - offset);
+                    // Ensure we are on the UI thread.
+                    var read = await recorder.ReadAsync(audioBuffer, 0, audioBuffer.Length);
+                    if (read > 0)
+                    {
+                        var offset = TrimAudioZeros(read);
+                        if (read > offset) audioCaptureStream.Write(audioBuffer, offset, read - offset);
+                    }
                 }
             }
+            catch { }
         }
 
         private int TrimAudioZeros(int read)
