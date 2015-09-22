@@ -50,6 +50,8 @@
             if (_observeCount == 0 && _incc != null) _incc.CollectionChanged += OnCollectionChanged;
 
             _observeCount++;
+
+            base.RegisterDataSetObserver(observer);
         }
 
         public override void UnregisterDataSetObserver(DataSetObserver observer)
@@ -68,6 +70,8 @@
                 _inpcs.Clear();
                 _initializedViews.Clear();
             }
+
+            base.UnregisterDataSetObserver(observer);
         }
 
         public override View GetView(int position, View convertView, ViewGroup parent)
