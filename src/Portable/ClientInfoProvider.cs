@@ -2,7 +2,6 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Reflection;
     using System.Threading.Tasks;
 
     public class ClientInfoProvider : IClientInfoProvider
@@ -20,33 +19,7 @@
             return result;
         }
 
-        private static string GetDeviceDeviceUniqueId()
-        {
-            try
-            {
-                var packageSpecificToken = Windows.System.Profile.HardwareIdentification.GetPackageSpecificToken(null);
-
-                var hardwareId = packageSpecificToken.Id;
-                var dataReader = Windows.Storage.Streams.DataReader.FromBuffer(hardwareId);
-
-                var array = new byte[hardwareId.Length];
-                dataReader.ReadBytes(array);
-
-                var result = Convert.ToBase64String(array);
-
-                var networkProfile = System.Linq.Enumerable.FirstOrDefault(Windows.Networking.Connectivity.NetworkInformation.GetConnectionProfiles());
-                if (networkProfile != null)
-                {
-                    result += "-" + networkProfile.NetworkAdapter.NetworkAdapterId.ToString("N").ToUpper();
-                }
-                return result;
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                return null;
-            }
-        }
+        private static string GetDeviceDeviceUniqueId() => null;
 
         private static async Task<string> TryGetRootDeviceInfoAsync(string propertyKey)
         {
