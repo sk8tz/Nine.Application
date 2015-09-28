@@ -159,29 +159,29 @@
             context.SendBroadcast(new Intent(Intent.ActionMediaScannerScanFile, Android.Net.Uri.Parse("file://" + root)));
         }
 
-        private bool trimAudioZeros;
-        private AudioRecord recorder;
-        private MemoryStream audioCaptureStream;
-        private byte[] audioBuffer = new Byte[10240];
-        private static readonly string recorderFile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments) + "LastRecorded.wav";
+        private bool _trimAudioZeros;
+        private AudioRecord _recorder;
+        private MemoryStream _audioCaptureStream;
+        private byte[] _audioBuffer = new byte[10240];
+        private static readonly string _recorderFile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments) + "LastRecorded.wav";
 
         public void BeginCaptureAudio()
         {
-            if (recorder != null) recorder.Dispose();
+            if (_recorder != null) _recorder.Dispose();
 
-            audioCaptureStream = new MemoryStream();
-            WriteWavHeader(audioCaptureStream, DefaultAudioSamplingRate);
+            _audioCaptureStream = new MemoryStream();
+            WriteWavHeader(_audioCaptureStream, DefaultAudioSamplingRate);
 
-            recorder = new AudioRecord(AudioSource.Mic, DefaultAudioSamplingRate, ChannelIn.Mono, Encoding.Pcm16bit, audioBuffer.Length);
+            _recorder = new AudioRecord(AudioSource.Mic, DefaultAudioSamplingRate, ChannelIn.Mono, Encoding.Pcm16bit, _audioBuffer.Length);
 
-            if (recorder.State != State.Initialized)
+            if (_recorder.State != State.Initialized)
             {
-                recorder = null;
+                _recorder = null;
                 return;
             }
 
-            recorder.StartRecording();
-            trimAudioZeros = true;
+            _recorder.StartRecording();
+            _trimAudioZeros = true;
 
             ReadAudioBufferAsync();
         }
@@ -190,14 +190,17 @@
         {
             try
             {
-                while (recorder != null)
+                while (_recorder != null)
                 {
                     // Ensure we are on the UI thread.
-                    var read = await recorder.ReadAsync(audioBuffer, 0, audioBuffer.Length);
-                    if (read > 0)
+                    var read = await _recorder.ReadAsync(_audioBuffer, 0, _audioBuffer.Length);
+
+                    if (read <= 0 || _audioCaptureStream == null) break;
+
+                    var offset = TrimAudioZeros(read);
+                    if (read > offset)
                     {
-                        var offset = TrimAudioZeros(read);
-                        if (read > offset) audioCaptureStream.Write(audioBuffer, offset, read - offset);
+                        _audioCaptureStream.Write(_audioBuffer, offset, read - offset);
                     }
                 }
             }
@@ -207,32 +210,36 @@
         private int TrimAudioZeros(int read)
         {
             var offset = 0;
-            if (trimAudioZeros)
+            if (_trimAudioZeros)
             {
-                trimAudioZeros = false;
-                while (offset < read && audioBuffer[offset] == 0) offset++;
+                _trimAudioZeros = false;
+                while (offset < read && _audioBuffer[offset] == 0) offset++;
             }
             return offset;
         }
 
         public Stream EndCaptureAudio()
         {
-            if (recorder != null)
+            if (_recorder != null)
             {
-                recorder.Stop();
+                _recorder.Stop();
 
-                var read = recorder.Read(audioBuffer, 0, audioBuffer.Length);
+                var read = _recorder.Read(_audioBuffer, 0, _audioBuffer.Length);
                 var offset = TrimAudioZeros(read);
-                if (read > offset) audioCaptureStream.Write(audioBuffer, offset, read - offset);
 
-                recorder.Release();
-                recorder.Dispose();
-                recorder = null;
+                var audioStream = _audioCaptureStream;
+                _audioCaptureStream = null;
 
-                UpdateWavHeader(audioCaptureStream);
+                if (read > offset) audioStream.Write(_audioBuffer, offset, read - offset);
 
-                audioCaptureStream.Seek(0, SeekOrigin.Begin);
-                return audioCaptureStream;
+                _recorder.Release();
+                _recorder.Dispose();
+                _recorder = null;
+
+                UpdateWavHeader(audioStream);
+
+                audioStream.Seek(0, SeekOrigin.Begin);
+                return audioStream;
             }
             return null;
         }
