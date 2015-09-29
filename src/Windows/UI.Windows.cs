@@ -144,7 +144,7 @@
 
             if (password)
             {
-                var passwordBox = new PasswordBox { Password = defaultText, Margin = new Thickness(0, 6, 0, 0) };
+                var passwordBox = new PasswordBox { Password = defaultText, MaxLength = 20, Margin = new Thickness(0, 6, 0, 0) };
                 passwordBox.SelectAll();
                 passwordBox.KeyDown += (s, e) =>
                 {
@@ -156,7 +156,7 @@
             }
             else
             {
-                var input = new TextBox { Text = defaultText, AcceptsReturn = false, Margin = new Thickness(0, 6, 0, 0) };
+                var input = new TextBox { Text = defaultText, AcceptsReturn = false, MaxLength = 140, Margin = new Thickness(0, 6, 0, 0) };
 
                 input.SelectAll();
                 input.KeyDown += (s, e) =>

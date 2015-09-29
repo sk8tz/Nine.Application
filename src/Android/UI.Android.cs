@@ -228,8 +228,13 @@
 
             if (password)
             {
+                input.SetFilters(new[] { new InputFilterLengthFilter(20) });
                 input.InputType = InputTypes.ClassText | InputTypes.TextVariationPassword;
                 input.TransformationMethod = PasswordTransformationMethod.Instance;
+            }
+            else
+            {
+                input.SetFilters(new[] { new InputFilterLengthFilter(140) });
             }
 
             var dialog = new AlertDialog.Builder(context)
