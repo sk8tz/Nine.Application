@@ -60,7 +60,7 @@
             return new MemoryStream(uIImage.AsPNG().ToArray());
         }
 
-        public Task SaveImageToLibrary(Stream image, string filename)
+        public Task<string> SaveImageToLibrary(Stream image, string filename)
         {
             throw new NotImplementedException();
         }

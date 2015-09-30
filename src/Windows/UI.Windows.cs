@@ -62,7 +62,13 @@
                 VerticalAlignment = VerticalAlignment.Bottom,
             };
 
-            content.Child = new TextBlock { Text = text, Foreground = new SolidColorBrush(Colors.White) };
+            content.Child = new TextBlock
+            {
+                Text = text,
+                MaxWidth = 320,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Foreground = new SolidColorBrush(Colors.White)
+            };
 
             if (grid.RowDefinitions.Count > 0) Grid.SetRowSpan(content, grid.RowDefinitions.Count);
             if (grid.ColumnDefinitions.Count > 0) Grid.SetColumnSpan(content, grid.ColumnDefinitions.Count);

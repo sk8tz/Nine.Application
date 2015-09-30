@@ -34,9 +34,9 @@
             return await file.OpenStreamForReadAsync();
         }
 
-        public async Task SaveImageToLibrary(Stream image, string filename)
+        public async Task<string> SaveImageToLibrary(Stream image, string filename)
         {
-            if (image == null || string.IsNullOrEmpty(filename)) return;
+            if (image == null || string.IsNullOrEmpty(filename)) return null;
 
             var picturesFolder = KnownFolders.PicturesLibrary;
             var folder = Path.GetDirectoryName(filename);
@@ -47,10 +47,13 @@
 
             var name = Path.GetFileName(filename);
             var file = await picturesFolder.CreateFileAsync(name, CreationCollisionOption.GenerateUniqueName);
-            using (var stream = (await file.OpenAsync(FileAccessMode.ReadWrite)).AsStreamForWrite())
+
+            using (var stream = await file.OpenStreamForWriteAsync())
             {
                 await image.CopyToAsync(stream);
             }
+
+            return file.Path;
         }
 
         private MediaElement player;

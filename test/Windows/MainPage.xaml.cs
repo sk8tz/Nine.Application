@@ -26,8 +26,8 @@ namespace Test
 
             //while (true)
             {
-                //await Task.Delay(1000); ui.Toast("hi", "toast");
-                //Debug.WriteLine(await ui.Notify("notification title", "message", new CancellationTokenSource(5000).Token));
+                await Task.Delay(1000); ui.Toast("hi", "toast lksjdffsdlkfjlsjf;lsfd;asj;fkadfjs;lkfjdskf==================---=-===================");
+                //ui.Toast("notification title", "messagea");
                 //Debug.WriteLine(await ui.Input("enter text here", "default", "ok", false, default(CancellationToken)));
                 //await ui.Confirm("hi", "dialog message", "yes", "no", new CancellationTokenSource(1000).Token);
             }

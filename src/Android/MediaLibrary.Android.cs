@@ -131,10 +131,10 @@
             }
         }
 
-        public async Task SaveImageToLibrary(Stream image, string filename)
+        public async Task<string> SaveImageToLibrary(Stream image, string filename)
         {
             var context = contextFactory();
-            if (context == null) return;
+            if (context == null) return null;
             if (string.IsNullOrEmpty(filename)) throw new ArgumentException(nameof(filename));
 
             var root = Android.OS.Environment.ExternalStorageDirectory;
@@ -157,6 +157,8 @@
 
             MediaStore.Images.Media.InsertImage(context.ContentResolver, bitmap, imageFile.Name, "");
             context.SendBroadcast(new Intent(Intent.ActionMediaScannerScanFile, Android.Net.Uri.Parse("file://" + root)));
+
+            return imageFile.AbsolutePath;
         }
 
         private bool _trimAudioZeros;

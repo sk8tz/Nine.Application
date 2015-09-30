@@ -89,7 +89,7 @@
 
 #if PCL
         public Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue) => Task.FromResult<Stream>(null);
-        public Task SaveImageToLibrary(Stream image, string filename) => Task.FromResult(0);
+        public Task<string> SaveImageToLibrary(Stream image, string filename) => Task.FromResult<string>(null);
         public Task PlaySound(string uri) => Task.FromResult(0);
         public void StopSound() { }
         public void BeginCaptureAudio() { }

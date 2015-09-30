@@ -12,10 +12,8 @@
     <tags>PCL, Portable, Xamarin, iOS, Android, Windows Phone, Windows Store, UI, Media, GeoLocation</tags>
   </metadata>
   <files>
-    <file src="..\WindowsStore\bin\$configuration$\$id$.dll" target="lib\netcore451" />
-    <file src="..\WindowsStore\bin\$configuration$\$id$.xml" target="lib\netcore451" />
-    <file src="..\WindowsPhone\bin\$configuration$\$id$.dll" target="lib\wp8" />
-    <file src="..\WindowsPhone\bin\$configuration$\$id$.xml" target="lib\wp8" />
+    <file src="..\Windows\bin\$configuration$\$id$.dll" target="lib\netcore451" />
+    <file src="..\Windows\bin\$configuration$\$id$.xml" target="lib\netcore451" />
     <file src="..\Android\bin\$configuration$\$id$.dll" target="lib\MonoAndroid" />
     <file src="..\Android\bin\$configuration$\$id$.xml" target="lib\MonoAndroid" />
     <file src="..\iOS\bin\$configuration$\$id$.dll" target="lib\MonoTouch" />

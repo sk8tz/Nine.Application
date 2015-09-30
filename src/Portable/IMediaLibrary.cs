@@ -8,7 +8,7 @@
     {
         Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue);
 
-        Task SaveImageToLibrary(Stream image, string filename);
+        Task<string> SaveImageToLibrary(Stream image, string filename);
 
         Task PlaySound(string uri);
 
