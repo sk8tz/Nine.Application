@@ -18,14 +18,11 @@
     using Windows.UI.Popups;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Controls.Primitives;
     using Windows.UI.Xaml.Media;
     using Windows.UI.Xaml.Media.Imaging;
 
     public partial class AppUI : IAppUI
     {
-        public static FrameworkElement LastActionItem { get; set; }
-
         public async Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
             var dialog = new MessageDialog(message, title);
