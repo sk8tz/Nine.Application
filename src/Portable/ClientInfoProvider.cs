@@ -9,33 +9,15 @@
 #if NETFX_CORE
         public PlatformName Platform => PlatformName.WindowsStore;
 
-        public async Task<ClientInfo> GetAsync()
+        public Task<ClientInfo> GetAsync()
         {
             var result = new ClientInfo();
             result.OperatingSystem = PlatformName.WindowsStore;
             result.DeviceUniqueId = GetDeviceDeviceUniqueId();
-            result.DeviceName = await TryGetRootDeviceInfoAsync("System.Devices.ModelDeviceName").ConfigureAwait(false);
-            result.DeviceManufacturer = await TryGetRootDeviceInfoAsync("System.Devices.DeviceManufacturer").ConfigureAwait(false);
-            return result;
+            return Task.FromResult(result);
         }
 
         private static string GetDeviceDeviceUniqueId() => null;
-
-        private static async Task<string> TryGetRootDeviceInfoAsync(string propertyKey)
-        {
-            try
-            {
-                // http://stackoverflow.com/questions/18599589/getting-os-platform-and-device-information-on-windows-8
-                object result;
-                var pnp = await Windows.Devices.Enumeration.Pnp.PnpObject.CreateFromIdAsync(
-                    Windows.Devices.Enumeration.Pnp.PnpObjectType.DeviceContainer, "{00000000-0000-0000-FFFF-FFFFFFFFFFFF}", new[] { propertyKey });
-                return pnp != null && pnp.Properties.TryGetValue(propertyKey, out result) && result != null ? result.ToString() : "";
-            }
-            catch
-            {
-                return null;
-            }
-        }
 #else
         public Task<ClientInfo> GetAsync()
         {
