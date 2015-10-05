@@ -29,5 +29,7 @@
         PlatformName Platform { get; }
 
         Task<ClientInfo> GetAsync();
+
+        Task<string> GetPushNotificationChannelAsync();
     }
 }

@@ -18,6 +18,12 @@
         }
 
         private static string GetDeviceDeviceUniqueId() => null;
+
+        public async Task<string> GetPushNotificationChannelAsync()
+        {
+            var channel = await Windows.Networking.PushNotifications.PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
+            return channel?.Uri;
+        }
 #else
         public Task<ClientInfo> GetAsync()
         {
@@ -54,6 +60,8 @@
             object value;
             return Microsoft.Phone.Info.DeviceExtendedProperties.TryGetValue("DeviceDeviceUniqueId", out value) && value is byte[] ? Convert.ToBase64String((byte[])value) : "";
         }
+
+        public Task<string> GetPushNotificationChannelAsync() => Task.FromResult<string>(null);
 #elif ANDROID
         public PlatformName Platform => PlatformName.Android;
 
@@ -83,6 +91,8 @@
             }
             return result;
         }
+
+        public Task<string> GetPushNotificationChannelAsync() => Task.FromResult<string>(null);
 #elif iOS
         public PlatformName Platform => PlatformName.iOS;
 
@@ -97,6 +107,8 @@
                 DeviceManufacturer = "Apple",
             };
         }
+
+        public Task<string> GetPushNotificationChannelAsync() => Task.FromResult<string>(null);
 #elif WINDOWS
         public PlatformName Platform => PlatformName.Windows;
 
@@ -108,13 +120,14 @@
                 OperatingSystemVersion = Environment.OSVersion.VersionString,
             };
         }
+
+        public Task<string> GetPushNotificationChannelAsync() => Task.FromResult<string>(null);
 #else
         public PlatformName Platform => PlatformName.Portable;
 
-        public ClientInfo GetClientInfo()
-        {
-            return new ClientInfo { OperatingSystem = PlatformName.Portable };
-        }
+        public ClientInfo GetClientInfo() => new ClientInfo { OperatingSystem = PlatformName.Portable };
+
+        public Task<string> GetPushNotificationChannelAsync() => Task.FromResult<string>(null);
 #endif
 #endif
     }
