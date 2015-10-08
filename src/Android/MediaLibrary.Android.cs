@@ -34,7 +34,7 @@
             this.contextFactory = contextFactory;
         }
 
-        public Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue)
+        public Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
         {
             var activity = contextFactory() as Activity;
             if (activity == null) return Task.FromResult<Stream>(null);
@@ -55,7 +55,7 @@
             var chooserIntent = Intent.CreateChooser(galleryIntent, "");
 
             // Camera.
-            if (showCamera)
+            if (location.HasFlag(ImageLocation.Camera))
             {
                 var cameraIntents = new List<Intent>();
                 var captureIntent = new Intent(MediaStore.ActionImageCapture);

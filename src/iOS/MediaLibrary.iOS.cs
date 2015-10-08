@@ -7,9 +7,9 @@
 
     public partial class MediaLibrary : IMediaLibrary
     {
-        public async Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue)
+        public async Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
         {
-            if (!showCamera)
+            if (!location.HasFlag(ImageLocation.Camera))
             {
                 return await PickImage(UIImagePickerControllerSourceType.PhotoLibrary, maxSize);
             }

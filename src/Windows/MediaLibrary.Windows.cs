@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
+    using Windows.Graphics.Imaging;
     using Windows.Media.Capture;
     using Windows.Media.MediaProperties;
     using Windows.Storage;
@@ -15,23 +16,52 @@
 
     public partial class MediaLibrary : IMediaLibrary
     {
-        public async Task<Stream> PickImage(bool showCamera = true, int maxSize = int.MaxValue)
+        public async Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
         {
-            var picker = new FileOpenPicker();
-            picker.FileTypeFilter.Clear();
-            picker.FileTypeFilter.Add(".bmp");
-            picker.FileTypeFilter.Add(".png");
-            picker.FileTypeFilter.Add(".jpeg");
-            picker.FileTypeFilter.Add(".jpg");
+            var raw = await PickImageRaw(location);
 
-            picker.ViewMode = PickerViewMode.Thumbnail;
-            picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+            if (raw == null) return null;
 
-            // TODO: Camera
+            using (var stream = await raw.OpenReadAsync())
+            {
+                var decoder = await BitmapDecoder.CreateAsync(stream);
 
-            var file = await picker.PickSingleFileAsync();
-            if (file == null) return null;
-            return await file.OpenStreamForReadAsync();
+                var size = Crop((int)decoder.PixelWidth, (int)decoder.PixelHeight, maxSize);
+                if (size.Item1 != decoder.PixelWidth || size.Item2 != decoder.PixelHeight)
+                {
+                    var ms = new InMemoryRandomAccessStream();
+                    var encoder = await BitmapEncoder.CreateForTranscodingAsync(ms, decoder);
+                    encoder.BitmapTransform.ScaledWidth = (uint)size.Item1;
+                    encoder.BitmapTransform.ScaledHeight = (uint)size.Item2;
+                    await encoder.FlushAsync();
+                    return ms.AsStreamForRead();
+                }
+            }
+
+            return await raw.OpenStreamForReadAsync();
+        }
+
+        private async Task<IStorageFile> PickImageRaw(ImageLocation location = ImageLocation.All)
+        {
+            if (location.HasFlag(ImageLocation.Camera))
+            {
+                var cameraUI = new CameraCaptureUI();
+                return await cameraUI.CaptureFileAsync(CameraCaptureUIMode.Photo);
+            }
+            else
+            {
+                var picker = new FileOpenPicker();
+                picker.FileTypeFilter.Clear();
+                picker.FileTypeFilter.Add(".bmp");
+                picker.FileTypeFilter.Add(".png");
+                picker.FileTypeFilter.Add(".jpeg");
+                picker.FileTypeFilter.Add(".jpg");
+
+                picker.ViewMode = PickerViewMode.Thumbnail;
+                picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+
+                return await picker.PickSingleFileAsync();
+            }
         }
 
         public async Task<string> SaveImageToLibrary(Stream image, string filename)
