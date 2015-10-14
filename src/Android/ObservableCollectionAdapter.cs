@@ -11,7 +11,7 @@
 
     public class ObservableCollectionAdapter<T> : BaseAdapter<T> where T : class
     {
-        struct Entry { public T Data; public bool Dirty; }
+        class Entry { public T Data; public bool Dirty; }
 
         private readonly IReadOnlyList<T> _items;
         private readonly int _resource;
@@ -38,7 +38,18 @@
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => NotifyDataSetChanged();
 
-        private void OnItemChanged(object sender, EventArgs e) => NotifyDataSetChanged();
+        private void OnItemChanged(object sender, EventArgs e)
+        {
+            foreach (var view in _initializedViews)
+            {
+                if (ReferenceEquals(view.Value.Data, sender))
+                {
+                    view.Value.Dirty = true;
+                }
+            }
+
+            NotifyDataSetChanged();
+        }
 
         public override T this[int position] => _items[position];
 
@@ -105,6 +116,7 @@
                 // Update existing view if the item has changed
                 if (entry.Dirty)
                 {
+                    entry.Dirty = false;
                     _prepareView?.Invoke(view, item);
                 }
                 return view;
