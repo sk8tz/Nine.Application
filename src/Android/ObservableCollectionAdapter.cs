@@ -9,14 +9,15 @@
     using Android.Views;
     using Android.Widget;
 
-    public class ObservableCollectionAdapter<T> : BaseAdapter<T>
+    public class ObservableCollectionAdapter<T> : BaseAdapter<T> where T : class
     {
+        struct Entry { public T Data; public bool Dirty; }
+
         private readonly IReadOnlyList<T> _items;
         private readonly int _resource;
         private readonly INotifyCollectionChanged _incc;
 
-        private readonly Dictionary<View, T> _initializedViews = new Dictionary<View, T>();
-        private readonly List<INotifyPropertyChanged> _inpcs = new List<INotifyPropertyChanged>();
+        private readonly Dictionary<View, Entry> _initializedViews = new Dictionary<View, Entry>();
 
         private readonly Activity _context;
 
@@ -62,50 +63,69 @@
             {
                 if (_incc != null) _incc.CollectionChanged -= OnCollectionChanged;
 
-                foreach (var inpc in _inpcs)
+                foreach (var entry in _initializedViews.Values)
                 {
-                    inpc.PropertyChanged -= OnItemChanged;
+                    var inpc = entry.Data as INotifyPropertyChanged;
+                    if (inpc != null) inpc.PropertyChanged -= OnItemChanged;
                 }
 
-                _inpcs.Clear();
                 _initializedViews.Clear();
             }
 
             base.UnregisterDataSetObserver(observer);
         }
 
-        public override View GetView(int position, View convertView, ViewGroup parent)
+        public override View GetView(int position, View view, ViewGroup parent)
         {
-            if (convertView != null)
-            {
-                T oldItem;
-                if (_initializedViews.TryGetValue(convertView, out oldItem))
-                {
-                    var inpc = oldItem as INotifyPropertyChanged;
-                    if (inpc != null) inpc.PropertyChanged -= OnItemChanged;
-                }
-            }
+            Entry entry;
 
-            View view = convertView;
-            if (view == null)
+            var item = this[position];
+            
+            if (view == null || !_initializedViews.TryGetValue(view, out entry))
             {
+                // Initialize a new view
                 view = _context.LayoutInflater.Inflate(_resource, parent, false);
+
                 _newView?.Invoke(view);
+
+                view.SetDataContext(item);
+
+                _prepareView?.Invoke(view, item);
+
+                _initializedViews.Add(view, new Entry { Data = item });
+
+                var inpc = item as INotifyPropertyChanged;
+                if (inpc != null) inpc.PropertyChanged += OnItemChanged;
+
+                return view;
             }
 
-            T item = this[position];
-            _initializedViews[view] = item;
-            view.SetDataContext(item);
-            _prepareView?.Invoke(view, item);
-
-            var observable = item as INotifyPropertyChanged;
-            if (observable != null)
+            if (ReferenceEquals(entry.Data, item))
             {
-                observable.PropertyChanged += OnItemChanged;
-                _inpcs.Add(observable);
+                // Update existing view if the item has changed
+                if (entry.Dirty)
+                {
+                    _prepareView?.Invoke(view, item);
+                }
+                return view;
             }
+            else
+            {
+                // Data context has changed
+                var inpc = entry.Data as INotifyPropertyChanged;
+                if (inpc != null) inpc.PropertyChanged -= OnItemChanged;
 
-            return view;
+                inpc = item as INotifyPropertyChanged;
+                if (inpc != null) inpc.PropertyChanged += OnItemChanged;
+
+                _initializedViews[view] = new Entry { Data = item };
+
+                view.SetDataContext(item);
+
+                _prepareView?.Invoke(view, item);
+
+                return view;
+            }
         }
     }
 }

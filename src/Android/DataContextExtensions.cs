@@ -17,7 +17,15 @@
 
         public static void SetDataContext<T>(this View view, T value)
         {
-            view.Tag = new Wrapper { Value = value };
+            var wrapper = view.Tag as Wrapper;
+            if (wrapper == null)
+            {
+                view.Tag = new Wrapper { Value = value };
+            }
+            else
+            {
+                wrapper.Value = value;
+            }
         }
     }
 }
