@@ -25,7 +25,6 @@
 
         private readonly Func<Context> contextFactory;
 
-        public MediaLibrary() : this(ContextProvider.Current) { }
         public MediaLibrary(Context context) : this(() => context) { }
         public MediaLibrary(Func<Context> contextFactory)
         {
@@ -72,6 +71,10 @@
 
             imageChooserTcs = new TaskCompletionSource<Stream>();
             activity.StartActivityForResult(chooserIntent, ImagePickerCode);
+
+            GC.Collect();
+            Java.Lang.Runtime.GetRuntime().Gc();
+
             return imageChooserTcs.Task;
         }
 
@@ -96,18 +99,18 @@
 
                 try
                 {
-                    using (var input = context.ContentResolver.OpenInputStream(selectedImageUri))
                     using (var output = context.ContentResolver.OpenOutputStream(_compressedPath, "w"))
-                    using (var bitmap = BitmapFactory.DecodeStream(input))
+                    using (var bitmap = CreateBitmap(selectedImageUri.Path, _maxSize))
                     {
-                        var size = Crop(bitmap.Width, bitmap.Height, _maxSize);
-                        using (var resized = Bitmap.CreateScaledBitmap(bitmap, size.Item1, size.Item2, true))
+                        if (bitmap == null)
                         {
-                            if (!resized.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
-                            {
-                                imageChooserTcs.TrySetResult(null);
-                                return;
-                            }
+                            imageChooserTcs.TrySetResult(null);
+                            return;
+                        }
+                        if (!bitmap.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
+                        {
+                            imageChooserTcs.TrySetResult(null);
+                            return;
                         }
                     }
 
@@ -127,7 +130,89 @@
                     {
                         new Java.IO.File(selectedImageUri.Path).Delete();
                     }
+
+                    GC.Collect();
+                    Java.Lang.Runtime.GetRuntime().Gc();
                 }
+            }
+        }
+
+        public Bitmap CreateBitmap(Stream stream, int maxPixelSize)
+        {
+            try
+            {
+                var op = new BitmapFactory.Options { InJustDecodeBounds = true };
+                BitmapFactory.DecodeStream(stream, null, op);
+                stream.Seek(0, SeekOrigin.Begin);
+                var sampleSize = ComputeSampleSize(op, -1, maxPixelSize * maxPixelSize);
+                return BitmapFactory.DecodeStream(stream, null, new BitmapFactory.Options { InSampleSize = sampleSize });
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        
+        public Bitmap CreateBitmap(string file, int maxPixelSize)
+        {
+            try
+            {
+                var op = new BitmapFactory.Options { InJustDecodeBounds = true };
+                BitmapFactory.DecodeFile(file, op);
+                var sampleSize = ComputeSampleSize(op, -1, maxPixelSize * maxPixelSize);
+                return BitmapFactory.DecodeFile(file, new BitmapFactory.Options { InSampleSize = sampleSize });
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static int ComputeSampleSize(BitmapFactory.Options options, int minSideLength, int maxNumOfPixels)
+        {
+            int initialSize = ComputeInitialSampleSize(options, minSideLength, maxNumOfPixels);
+            int roundedSize;
+            if (initialSize <= 8)
+            {
+                roundedSize = 1;
+                while (roundedSize < initialSize)
+                {
+                    roundedSize <<= 1;
+                }
+            }
+            else
+            {
+                roundedSize = (initialSize + 7) / 8 * 8;
+            }
+
+            return roundedSize;
+        }
+
+        private static int ComputeInitialSampleSize(BitmapFactory.Options options, int minSideLength, int maxNumOfPixels)
+        {
+            double w = options.OutWidth;
+            double h = options.OutHeight;
+
+            int lowerBound = (maxNumOfPixels == -1) ? 1 : (int)Math.Ceiling(Math.Sqrt(w * h / maxNumOfPixels));
+            int upperBound = (minSideLength == -1) ? 128 : (int)Math.Min(Math.Floor(w / minSideLength), Math.Floor(h / minSideLength));
+
+            if (upperBound < lowerBound)
+            {
+                // return the larger one when there is no overlapping zone. 
+                return lowerBound;
+            }
+
+            if ((maxNumOfPixels == -1) && (minSideLength == -1))
+            {
+                return 1;
+            }
+            else if (minSideLength == -1)
+            {
+                return lowerBound;
+            }
+            else
+            {
+                return upperBound;
             }
         }
 

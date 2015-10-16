@@ -51,8 +51,7 @@
 
         public int? SmallIcon { get; set; }
         public int? LargeIcon { get; set; }
-
-        public AppUI() : this(ContextProvider.Current) { }
+        
         public AppUI(Context context) : this(() => context) { }
         public AppUI(Func<Context> contextFactory)
         {
