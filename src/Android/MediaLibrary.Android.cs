@@ -108,10 +108,18 @@
                             imageChooserTcs.TrySetResult(null);
                             return;
                         }
-                        if (!bitmap.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
+
+                        try
                         {
-                            imageChooserTcs.TrySetResult(null);
-                            return;
+                            if (!bitmap.Compress(Bitmap.CompressFormat.Jpeg, 80, output))
+                            {
+                                imageChooserTcs.TrySetResult(null);
+                                return;
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.Recycle();
                         }
                     }
 

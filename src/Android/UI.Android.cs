@@ -97,7 +97,7 @@
             dialog.Show();
             cancellation.Register(() =>
             {
-                dialog.Hide();
+                dialog.Dismiss();
                 tcs.TrySetResult(false);
             });
             return tcs.Task;
@@ -209,7 +209,7 @@
             dialog.Show();
             cancellation.Register(() =>
             {
-                dialog.Hide();
+                dialog.Dismiss();
                 tcs.TrySetResult(null);
             });
             return tcs.Task;
@@ -273,7 +273,7 @@
             dialog.Show();
             cancellation.Register(() =>
             {
-                dialog.Hide();
+                dialog.Dismiss();
                 tcs.TrySetResult(null);
             });
             return tcs.Task;
