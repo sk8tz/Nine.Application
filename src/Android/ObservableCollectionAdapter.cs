@@ -23,17 +23,33 @@
 
         private readonly Action<View> _newView;
         private readonly Action<View, T> _prepareView;
+        private readonly Action<View> _destroyView;
 
         private int _observeCount;
 
-        public ObservableCollectionAdapter(Activity context, int resource, IReadOnlyList<T> items, Action<View> newView, Action<View, T> prepareView)
+        public ObservableCollectionAdapter(
+            Activity context,
+            int resource,
+            IReadOnlyList<T> items,
+            Action<View> newView,
+            Action<View, T> prepareView,
+            Action<View> destroyView = null)
         {
             _context = context;
             _resource = resource;
             _items = items;
             _prepareView = prepareView;
             _newView = newView;
+            _destroyView = destroyView;
             _incc = items as INotifyCollectionChanged;
+        }
+
+        public void Refresh()
+        {
+            foreach (var view in _initializedViews)
+            {
+                _prepareView(view.Key, view.Value.Data);
+            }
         }
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => NotifyDataSetChanged();
@@ -74,10 +90,12 @@
             {
                 if (_incc != null) _incc.CollectionChanged -= OnCollectionChanged;
 
-                foreach (var entry in _initializedViews.Values)
+                foreach (var entry in _initializedViews)
                 {
-                    var inpc = entry.Data as INotifyPropertyChanged;
+                    var inpc = entry.Value.Data as INotifyPropertyChanged;
                     if (inpc != null) inpc.PropertyChanged -= OnItemChanged;
+
+                    _destroyView?.Invoke(entry.Key);
                 }
 
                 _initializedViews.Clear();
