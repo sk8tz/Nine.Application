@@ -99,8 +99,9 @@
 
                 try
                 {
+                    using (var input = new DelegateStream(() => context.ContentResolver.OpenInputStream(selectedImageUri)))
                     using (var output = context.ContentResolver.OpenOutputStream(_compressedPath, "w"))
-                    using (var bitmap = CreateBitmap(selectedImageUri.Path, _maxSize))
+                    using (var bitmap = CreateBitmap(input, _maxSize))
                     {
                         if (bitmap == null)
                         {
@@ -137,7 +138,7 @@
             }
         }
 
-        public Bitmap CreateBitmap(Stream stream, int maxPixelSize)
+        public static Bitmap CreateBitmap(Stream stream, int maxPixelSize)
         {
             try
             {
@@ -152,8 +153,8 @@
                 return null;
             }
         }
-        
-        public Bitmap CreateBitmap(string file, int maxPixelSize)
+
+        public static Bitmap CreateBitmap(string file, int maxPixelSize)
         {
             try
             {

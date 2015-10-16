@@ -6,7 +6,7 @@
         private readonly Func<Stream> _open;
         private readonly Action _dispose;
 
-        public DelegateStream(Func<Stream> open, Action dispose)
+        public DelegateStream(Func<Stream> open, Action dispose = null)
         {
             _stream = open();
             _dispose = dispose;
@@ -49,7 +49,7 @@
         protected override void Dispose(bool disposing)
         {
             _stream.Dispose();
-            _dispose();
+            _dispose?.Invoke();
             base.Dispose(disposing);
         }
     }
