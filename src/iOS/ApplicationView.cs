@@ -3,7 +3,7 @@
     using System.Linq;
     using UIKit;
 
-    public static class ApplicationView
+    static class ApplicationView
     {
         public static UIViewController Current
         {

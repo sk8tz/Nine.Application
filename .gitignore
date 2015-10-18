@@ -9,3 +9,6 @@
 /**/obj
 /packages
 /.vs
+
+*.DS_Store
+*.userprefs

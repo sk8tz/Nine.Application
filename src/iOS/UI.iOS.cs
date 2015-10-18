@@ -12,11 +12,18 @@
 
     public partial class AppUI : IAppUI
     {
+        public static string AppId { get; set; }
+        
         public virtual Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
+            var syncContext = SynchronizationContext.Current;
             var tcs = new TaskCompletionSource<bool>();
             var view = new UIAlertView(title, message, null, no, yes) { TintColor = UIWindow.Appearance.TintColor };
-            view.Clicked += (sender, e) => { tcs.SetResult(e.ButtonIndex != view.CancelButtonIndex); };
+
+            cancellation.Register(() => syncContext.Post(_ => view.DismissWithClickedButtonIndex(view.CancelButtonIndex, true), null));
+
+            view.Dismissed += (sender, e) => tcs.TrySetResult(e.ButtonIndex != view.CancelButtonIndex);
+            view.Clicked += (sender, e) => tcs.TrySetResult(e.ButtonIndex != view.CancelButtonIndex);
             view.Show();
 
             return tcs.Task;
@@ -34,8 +41,11 @@
 
         public virtual Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation)
         {
+            var owner = UIApplication.SharedApplication.KeyWindow;
+            if (owner == null) return null;
+
             var buttons = items.ToArray();
-            var owner = ApplicationView.Current.View;
+            var syncContext = SynchronizationContext.Current;
             var tcs = new TaskCompletionSource<int?>();
             var view = new UIActionSheet(title) { TintColor = UIWindow.Appearance.TintColor };
 
@@ -49,6 +59,8 @@
                 view.CancelButtonIndex = selectedIndex.Value;
             }
 
+            cancellation.Register(() => syncContext.Post(_ => view.DismissWithClickedButtonIndex(view.CancelButtonIndex, true), null));
+
             view.Clicked += (sender, e) => { tcs.TrySetResult((int)e.ButtonIndex); };
             view.ShowInView(owner);
             return tcs.Task;
@@ -56,11 +68,18 @@
 
         public virtual Task<string> Input(string title, string defaultText, string yes, bool password, CancellationToken cancellation)
         {
+            var syncContext = SynchronizationContext.Current;
             var tcs = new TaskCompletionSource<string>();
             var view = new UIAlertView(title, "", null, yes) { TintColor = UIWindow.Appearance.TintColor };
-            view.AlertViewStyle = UIAlertViewStyle.PlainTextInput;
-            view.GetTextField(0).Text = defaultText;
-            view.Clicked += (sender, e) => { tcs.SetResult(view.GetTextField(0).Text); };
+            view.AlertViewStyle = password ? UIAlertViewStyle.SecureTextInput : UIAlertViewStyle.PlainTextInput;
+
+            var textField = view.GetTextField(0);
+            textField.Text = defaultText;
+            view.Dismissed += (sender, e) => tcs.TrySetResult(null);
+            view.Clicked += (sender, e) => tcs.TrySetResult(view.GetTextField(0).Text);
+
+            cancellation.Register(() => syncContext.Post(_ => view.DismissWithClickedButtonIndex(view.CancelButtonIndex, true), null));
+
             view.Show();
 
             return tcs.Task;
@@ -68,7 +87,11 @@
 
         public virtual void RateMe()
         {
-            // Suggest to use iRate
+            if (!string.IsNullOrEmpty(AppId))
+            {
+                // https://github.com/nicklockwood/iRate/blob/master/iRate/iRate.m
+                UIApplication.SharedApplication.OpenUrl(new NSUrl($"itms-apps://itunes.apple.com/app/id{AppId}"));
+            }
         }
 
         public virtual void CopyToClipboard(string text)
@@ -98,24 +121,6 @@
         public virtual void Browse(string url)
         {
             UIApplication.SharedApplication.OpenUrl(new NSUrl(url));
-        }
-
-        private static string CancelText()
-        {
-            // TODO: from app itself
-            var uiKitClass = GetClassForType(typeof(UIButton));
-            if (uiKitClass == null) return "Cancel";
-            var uikitBundle = NSBundle.FromClass(uiKitClass);
-            if (uikitBundle == null) return "Cancel";
-            return uikitBundle.LocalizedString("Cancel", null, null) ?? "Cancel";
-        }
-
-        private static Class GetClassForType(Type type)
-        {
-            var handle = Class.GetHandle(type);
-            if (handle != IntPtr.Zero)
-                return new Class(handle);
-            return null;
         }
     }
 }

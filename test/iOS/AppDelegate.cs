@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Foundation;
 using UIKit;
@@ -31,10 +33,23 @@ namespace Nine.Application.iOS.Test
             // If you have defined a view, add it here:
             // window.RootViewController  = navigationController;
 
+			window.BackgroundColor = UIColor.White;
+
             // make the window visible
             window.MakeKeyAndVisible();
 
+			Test();
+
             return true;
         }
+
+		private async void Test()
+		{
+			var ui = new AppUI();
+
+			await ui.Confirm(null,
+                (await ui.Select("title", 1, new[] {"0", "1", "this is good"}, default(CancellationToken)))?.ToString() ?? "null",
+				"yes", "no", default(CancellationToken));
+		}
     }
 }
