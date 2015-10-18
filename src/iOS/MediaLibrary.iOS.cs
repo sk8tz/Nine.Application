@@ -3,66 +3,141 @@
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using Foundation;
     using UIKit;
+    using CoreGraphics;
 
     public partial class MediaLibrary : IMediaLibrary
     {
-        public async Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
+        public Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
         {
-            if (!location.HasFlag(ImageLocation.Camera))
-            {
-                return await PickImage(UIImagePickerControllerSourceType.PhotoLibrary, maxSize);
-            }
+            var controller = ApplicationView.ViewController;
 
-            var owner = ApplicationView.Current.View;
-            var tcs = new TaskCompletionSource<int?>();
-            var view = new UIActionSheet() { TintColor = UIWindow.Appearance.TintColor };
-
-            // TODO: localization
-            view.AddButton("Take Photo");
-            view.AddButton("Choose From Library");
-            view.AddButton("Cancel");
-            view.CancelButtonIndex = 2;
-            view.Clicked += (sender, e) => { tcs.TrySetResult((int)e.ButtonIndex); };
-            view.ShowInView(owner);
-
-            var index = await tcs.Task;
-            if (index == 0)
-            {
-                return await PickImage(UIImagePickerControllerSourceType.Camera, maxSize);
-            }
-            if (index == 1)
-            {
-                return await PickImage(UIImagePickerControllerSourceType.PhotoLibrary, maxSize);
-            }
-            return null;
-        }
-
-        private static Task<Stream> PickImage(UIImagePickerControllerSourceType type, int maxSize)
-        {
-            var view = ApplicationView.Current;
-            if (view == null) return Task.FromResult<Stream>(null);
-
+            var sourceType = location == ImageLocation.Camera 
+                ? UIImagePickerControllerSourceType.Camera
+                : UIImagePickerControllerSourceType.PhotoLibrary;
+            
             var tcs = new TaskCompletionSource<Stream>();
-            var picker = new UIImagePickerController { SourceType = type, AllowsEditing = false, };
+            var picker = new UIImagePickerController { SourceType = sourceType, AllowsEditing = true };
 
-            // TODO: Resize and compress
             picker.Canceled += (sender, e) => { tcs.TrySetResult(null); picker.DismissViewController(true, null); };
-            picker.FinishedPickingMedia += (sender, e) => { tcs.TrySetResult(GetStream(e.EditedImage ?? e.OriginalImage)); picker.DismissViewController(true, null); };
-            picker.FinishedPickingImage += (sender, e) => { tcs.TrySetResult(GetStream(e.Image)); picker.DismissViewController(true, null); };
+            picker.FinishedPickingMedia += (sender, e) => { tcs.TrySetResult(GetStream(ResizeImage(e.EditedImage ?? e.OriginalImage, maxSize))); picker.DismissViewController(true, null); };
+            picker.FinishedPickingImage += (sender, e) => { tcs.TrySetResult(GetStream(ResizeImage(e.Image, maxSize))); picker.DismissViewController(true, null); };
 
-            view.PresentViewController(picker, true, null);
+            if (controller != null)
+            {
+                controller.PresentViewController(picker, true, null);
+            }
+            else
+            {
+                UIApplication.SharedApplication.KeyWindow.RootViewController = picker;
+            }
             return tcs.Task;
         }
 
-        private static Stream GetStream(UIImage uIImage)
+        private static UIImage ResizeImage(UIImage image, int maxSize)
         {
-            return new MemoryStream(uIImage.AsPNG().ToArray());
+            var newSize = Crop((int)image.Size.Width, (int)image.Size.Height, maxSize);
+            if (newSize.Item1 == image.Size.Width && newSize.Item2 == image.Size.Height)
+            {
+                return image;
+            }
+
+            // https://github.com/giacgbj/UIImageSwiftExtensions/blob/master/UIImage%2BResize.swift
+            var transpose = (image.Orientation == UIImageOrientation.Left ||
+                             image.Orientation == UIImageOrientation.LeftMirrored ||
+                             image.Orientation == UIImageOrientation.Right ||
+                             image.Orientation == UIImageOrientation.RightMirrored);
+
+            var rect = new CGRect(0, 0, newSize.Item1, newSize.Item2); 
+            if (!transpose)
+            {
+                rect = rect.Integral();
+            }
+
+            var bitmap = new CGBitmapContext(
+                             null, 
+                             newSize.Item1, 
+                             newSize.Item2, 
+                             image.CGImage.BitsPerComponent,
+                             0,
+                             image.CGImage.ColorSpace,
+                             image.CGImage.BitmapInfo);
+            using (bitmap)
+            {
+                bitmap.ConcatCTM(TransformForOrientation(image, newSize.Item1, newSize.Item2));
+                bitmap.InterpolationQuality = CGInterpolationQuality.High;
+                bitmap.DrawImage(rect, image.CGImage);
+
+                return new UIImage(bitmap.ToImage());
+            }
+        }
+
+        private static CGAffineTransform TransformForOrientation(UIImage image, float width, float height)
+        { 
+            var transform = CGAffineTransform.MakeIdentity();
+
+            switch (image.Orientation) {
+                case UIImageOrientation.Down:
+                case UIImageOrientation.DownMirrored:
+                    // EXIF = 3 / 4
+                    transform = CGAffineTransform.Translate(transform, width, height);
+                    transform = CGAffineTransform.Rotate(transform, (float)Math.PI);
+                    break;
+                case UIImageOrientation.Left:
+                case UIImageOrientation.LeftMirrored:
+                    // EXIF = 6 / 5
+                    transform = CGAffineTransform.Translate(transform, width, 0);
+                    transform = CGAffineTransform.Rotate(transform, (float)Math.PI * 2);
+                    break;
+                case UIImageOrientation.Right:
+                case UIImageOrientation.RightMirrored:
+                    // EXIF = 8 / 7
+                    transform = CGAffineTransform.Translate(transform, 0, height);
+                    transform = CGAffineTransform.Rotate(transform, -(float)Math.PI * 2);
+                    break;
+                default:
+                    break;
+            }
+
+            switch(image.Orientation) {
+                case UIImageOrientation.UpMirrored:
+                case UIImageOrientation.DownMirrored:
+                    // EXIF = 2 / 4
+                    transform = CGAffineTransform.Translate(transform, width, 0);
+                    transform = CGAffineTransform.Scale(transform, -1, 1);
+                    break;
+                case UIImageOrientation.LeftMirrored:
+                case UIImageOrientation.RightMirrored:
+                    // EXIF = 5 / 7
+                    transform = CGAffineTransform.Translate(transform, height, 0);
+                    transform = CGAffineTransform.Scale(transform, -1, 1);
+                    break;
+                default:
+                    break;
+            }
+
+            return transform;
+        }
+
+        private static Stream GetStream(UIImage image)
+        {
+            using (image)
+            {
+                return image.AsJPEG(0.8f).AsStream();
+            }
         }
 
         public Task<string> SaveImageToLibrary(Stream image, string filename)
         {
-            throw new NotImplementedException();
+            if (image == null) return Task.FromResult<string>(null);
+
+            var tcs = new TaskCompletionSource<string>();
+            using (var uiImage = new UIImage(NSData.FromStream(image)))
+            {
+                uiImage.SaveToPhotosAlbum((img, err) => tcs.TrySetResult(err != null ? null : filename));
+            }
+            return tcs.Task;
         }
 
         public Task PlaySound(string uri)

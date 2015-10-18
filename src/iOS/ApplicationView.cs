@@ -5,7 +5,7 @@
 
     static class ApplicationView
     {
-        public static UIViewController Current
+        public static UIViewController ViewController
         {
             get
             {
