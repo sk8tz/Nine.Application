@@ -65,6 +65,7 @@
             var context = _contextFactory();
             if (context == null) return Task.FromResult(false);
 
+            var syncContext = SynchronizationContext.Current;
             var tcs = new TaskCompletionSource<bool>();
             var builder = new AlertDialog.Builder(context)
                 .SetMessage(message)
@@ -97,7 +98,7 @@
             dialog.Show();
             cancellation.Register(() =>
             {
-                dialog.Dismiss();
+                syncContext.Post(_ => dialog.Dismiss(), null);
                 tcs.TrySetResult(false);
             });
             return tcs.Task;
@@ -189,6 +190,7 @@
             var context = _contextFactory();
             if (context == null) return Task.FromResult<int?>(null);
 
+            var syncContext = SynchronizationContext.Current;
             var tcs = new TaskCompletionSource<int?>();
             var dialog = new AlertDialog.Builder(context)
                 .SetTitle(title)
@@ -209,7 +211,7 @@
             dialog.Show();
             cancellation.Register(() =>
             {
-                dialog.Dismiss();
+                syncContext.Post(_ => dialog.Dismiss(), null);
                 tcs.TrySetResult(null);
             });
             return tcs.Task;
@@ -220,6 +222,7 @@
             var context = _contextFactory();
             if (context == null) return Task.FromResult("");
 
+            var syncContext = SynchronizationContext.Current;
             var tcs = new TaskCompletionSource<string>();
             var input = new EditText(context) { Text = defaultText };
 
@@ -273,7 +276,7 @@
             dialog.Show();
             cancellation.Register(() =>
             {
-                dialog.Dismiss();
+                syncContext.Post(_ => dialog.Dismiss(), null);
                 tcs.TrySetResult(null);
             });
             return tcs.Task;
