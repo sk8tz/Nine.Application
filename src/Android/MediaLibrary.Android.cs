@@ -263,7 +263,11 @@
 
         public void BeginCaptureAudio()
         {
-            if (_recorder != null) _recorder.Dispose();
+            if (_recorder != null)
+            {
+                _recorder.Release();
+                _recorder.Dispose();
+            }
 
             _audioCaptureStream = new MemoryStream();
             WriteWavHeader(_audioCaptureStream, DefaultAudioSamplingRate);
@@ -318,10 +322,10 @@
         {
             if (_recorder != null)
             {
-                _recorder.Stop();
-
                 var read = _recorder.Read(_audioBuffer, 0, _audioBuffer.Length);
                 var offset = TrimAudioZeros(read);
+
+                _recorder.Stop();
 
                 var audioStream = _audioCaptureStream;
                 _audioCaptureStream = null;
@@ -340,8 +344,8 @@
             return null;
         }
 
-        private MediaPlayer player;
-        private TaskCompletionSource<bool> playerTcs;
+        private MediaPlayer _player;
+        private TaskCompletionSource<bool> _playerTcs;
 
         public Task PlaySound(string uri)
         {
@@ -350,25 +354,28 @@
             var player = new MediaPlayer();
             var playerTcs = new TaskCompletionSource<bool>();
 
-            player.Error += (sender, e) => { playerTcs.TrySetException(new InvalidOperationException("MediaPlayer error: " + e.What.ToString())); };
-            player.Completion += (sender, e) => { playerTcs.TrySetResult(false); };
-            player.Prepared += (sender, e) => { player.Start(); };
+            player.Error += (sender, e) => StopSound();
+            player.Completion += (sender, e) => { playerTcs.TrySetResult(false); StopSound(); };
+            player.Prepared += (sender, e) => player.Start();
 
             player.SetDataSource(uri);
             player.PrepareAsync();
 
-            this.player = player;
-            this.playerTcs = playerTcs;
+            _player = player;
+            _playerTcs = playerTcs;
 
             return playerTcs.Task;
         }
 
         public void StopSound()
         {
-            if (player != null)
+            if (_player != null)
             {
-                playerTcs.TrySetResult(true);
-                player.Stop();
+                _playerTcs.TrySetResult(true);
+                _player.Stop();
+                _player.Release();
+                _player.Dispose();
+                _player = null;
             }
         }
     }
