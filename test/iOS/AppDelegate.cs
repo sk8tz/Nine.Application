@@ -47,26 +47,34 @@ namespace Nine.Application.iOS.Test
 		private async void Test()
 		{
 			var ui = new AppUI();
-            var media = new MediaLibrary();
 
-            media.BeginCaptureAudio();
-            await Task.Delay(5000);
-            using (var audio = media.EndCaptureAudio())
-            using (var o = File.Create("a.wav"))
+            ui.Notify("title", "message1", new CancellationTokenSource(1000).Token);
+            ui.Notify("title", "message2", new CancellationTokenSource(1000).Token);
+            ui.Notify("title", "message3", new CancellationTokenSource(1000).Token);
+
+            if (false)
             {
-                audio.CopyTo(o);
-            }
+                var media = new MediaLibrary();
 
-            media.PlaySound("a.wav");
-            await Task.Delay(1000);
-            media.StopSound();
+                media.BeginCaptureAudio();
+                await Task.Delay(5000);
+                using (var audio = media.EndCaptureAudio())
+                using (var o = File.Create("a.wav"))
+                {
+                    audio.CopyTo(o);
+                }
+
+                media.PlaySound("a.wav");
+                await Task.Delay(1000);
+                media.StopSound();
 
 
-            using (var img = await media.PickImage(ImageLocation.Library, 32))
-            {
-                await ui.Confirm(null,
-                    await media.SaveImageToLibrary(img, "filename") ?? "null",
-                    "yes", "no", default(CancellationToken));
+                using (var img = await media.PickImage(ImageLocation.Library, 32))
+                {
+                    await ui.Confirm(null,
+                        await media.SaveImageToLibrary(img, "filename") ?? "null",
+                        "yes", "no", default(CancellationToken));
+                }
             }
 		}
     }

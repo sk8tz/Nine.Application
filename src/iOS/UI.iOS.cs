@@ -13,7 +13,10 @@
     public partial class AppUI : IAppUI
     {
         public static string AppId { get; set; }
-        
+
+        private UILocalNotification _lastNotification;
+        private UIUserNotificationSettings _notificationSettings;
+
         public virtual Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
             var syncContext = SynchronizationContext.Current;
@@ -36,6 +39,29 @@
 
         public virtual Task<bool> Notify(string title, string message, CancellationToken cancellation)
         {
+            var notification = new UILocalNotification();
+            notification.AlertTitle = title;
+            notification.AlertBody = message;
+            notification.SoundName = UILocalNotification.DefaultSoundName;
+
+            if (_notificationSettings == null)
+            {
+                _notificationSettings = UIUserNotificationSettings.GetSettingsForTypes(UIUserNotificationType.Alert | UIUserNotificationType.Sound, null);
+                UIApplication.SharedApplication.RegisterUserNotificationSettings(_notificationSettings);
+            }
+
+            if (_lastNotification != null)
+            {
+                UIApplication.SharedApplication.CancelLocalNotification(_lastNotification);
+            }
+
+            UIApplication.SharedApplication.PresentLocalNotificationNow(notification);
+
+            var syncContext = SynchronizationContext.Current;
+            cancellation.Register(() => syncContext.Post(_ => UIApplication.SharedApplication.CancelLocalNotification(notification), null));
+
+            _lastNotification = notification;
+
             return Task.FromResult(false);
         }
 
