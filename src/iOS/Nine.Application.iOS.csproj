@@ -44,6 +44,9 @@
   <ItemGroup>
     <Compile Include="..\Portable\*.cs" />
     <Compile Include="*.cs" />
+    <Compile Include="..\Android\DelegateStream.cs">
+      <Link>DelegateStream.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

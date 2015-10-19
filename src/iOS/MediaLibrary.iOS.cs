@@ -3,6 +3,8 @@
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using AudioToolbox;
+    using AVFoundation;
     using Foundation;
     using UIKit;
     using CoreGraphics;
@@ -140,24 +142,67 @@
             return tcs.Task;
         }
 
-        public Task PlaySound(string uri)
+        private AVAudioPlayer _audioPlayer;
+        private AVAudioRecorder _audioRecorder;
+
+        public Task PlaySound(string file)
         {
-            throw new NotImplementedException();
+            StopSound();
+
+            var tcs = new TaskCompletionSource<bool>();
+            _audioPlayer = AVAudioPlayer.FromUrl(NSUrl.FromFilename(file));
+            _audioPlayer.NumberOfLoops = 1;
+            _audioPlayer.Volume = 1.0f;
+            _audioPlayer.DecoderError += (sender, e) =>
+            {
+                tcs.TrySetResult(false);
+            };
+            _audioPlayer.FinishedPlaying += (sender, e) =>
+            {
+                tcs.TrySetResult(true);
+            };
+            _audioPlayer.PrepareToPlay();
+            _audioPlayer.Play();
+            return tcs.Task;
         }
 
         public void StopSound()
         {
-            throw new NotImplementedException();
+            if (_audioPlayer != null)
+            {
+                _audioPlayer.Stop();
+                _audioPlayer.Dispose();
+                _audioPlayer = null;
+            }
         }
 
         public void BeginCaptureAudio()
         {
-            throw new NotImplementedException();
+            NSError error;
+            var settings = new AudioSettings { AudioQuality = AVAudioQuality.Medium };
+            
+            _audioRecorder = AVAudioRecorder.Create(new NSUrl($"record-{Guid.NewGuid().ToString()}.wav"), settings, out error);
+            if (_audioRecorder != null && _audioRecorder.PrepareToRecord())
+            {
+                _audioRecorder.Record();
+            }
+            else
+            {
+                _audioRecorder = null;
+            }
         }
 
         public Stream EndCaptureAudio()
         {
-            throw new NotImplementedException();
+            if (_audioRecorder == null) return null;
+
+            _audioRecorder.Stop();
+
+            var path = _audioRecorder.Url.Path;
+
+            return new DelegateStream(
+                () => File.OpenRead(path), 
+                () => File.Delete(path));
         }
     }
 }
