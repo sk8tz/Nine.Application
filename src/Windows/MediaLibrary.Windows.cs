@@ -1,7 +1,6 @@
 ﻿namespace Nine.Application
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
     using Windows.Graphics.Imaging;
@@ -16,6 +15,8 @@
 
     public partial class MediaLibrary : IMediaLibrary
     {
+        public AudioEncodingQuality AudioEncodingQuality { get; set; } = AudioEncodingQuality.Medium;
+
         public async Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
         {
             var raw = await PickImageRaw(location);
@@ -155,7 +156,7 @@
             }
 
             recorderBuffer = new InMemoryRandomAccessStream();
-            var record = recorder.StartRecordToStreamAsync(MediaEncodingProfile.CreateWav(AudioEncodingQuality.Auto), recorderBuffer);
+            var record = recorder.StartRecordToStreamAsync(MediaEncodingProfile.CreateWav(AudioEncodingQuality), recorderBuffer);
             isRecording = true;
             await record;
         }
