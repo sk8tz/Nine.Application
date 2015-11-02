@@ -16,7 +16,7 @@
     <file src="..\Windows\bin\$configuration$\$id$.xml" target="lib\netcore451" />
     <file src="..\Android\bin\$configuration$\$id$.dll" target="lib\MonoAndroid" />
     <file src="..\Android\bin\$configuration$\$id$.xml" target="lib\MonoAndroid" />
-    <file src="..\iOS\bin\$configuration$\$id$.dll" target="lib\MonoTouch" />
-    <file src="..\iOS\bin\$configuration$\$id$.xml" target="lib\MonoTouch" />
+    <file src="..\iOS\bin\$configuration$\$id$.dll" target="lib\Xamarin.iOS10" />
+    <file src="..\iOS\bin\$configuration$\$id$.xml" target="lib\Xamarin.iOS10" />
   </files>
 </package>
