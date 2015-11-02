@@ -48,7 +48,6 @@
     <Compile Include="IAppBundle.cs" />
     <Compile Include="IClientInfoProvider.cs" />
     <Compile Include="AppUI.cs" />
-    <Compile Include="LocalizedText.cs" />
     <Compile Include="MediaLibrary.cs" />
     <Compile Include="Geolocator.cs" />
     <Compile Include="ClientInfoProvider.cs" />
