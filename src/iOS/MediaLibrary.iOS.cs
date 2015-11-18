@@ -20,7 +20,7 @@
                 : UIImagePickerControllerSourceType.PhotoLibrary;
             
             var tcs = new TaskCompletionSource<Stream>();
-            var picker = new UIImagePickerController { SourceType = sourceType, AllowsEditing = true };
+            var picker = new UIImagePickerController { SourceType = sourceType, AllowsEditing = (sourceType == UIImagePickerControllerSourceType.Camera) };
 
             picker.Canceled += (sender, e) => { tcs.TrySetResult(null); picker.DismissViewController(true, null); };
             picker.FinishedPickingMedia += (sender, e) => { tcs.TrySetResult(GetStream(ResizeImage(e.EditedImage ?? e.OriginalImage, maxSize))); picker.DismissViewController(true, null); };
