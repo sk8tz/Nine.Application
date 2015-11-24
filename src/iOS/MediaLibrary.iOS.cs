@@ -11,9 +11,14 @@
 
     public partial class MediaLibrary : IMediaLibrary
     {
+        private readonly Func<UIViewController> _viewController;
+        
+        public MediaLibrary() { }
+        public MediaLibrary(Func<UIViewController> viewController) { _viewController = viewController; }
+        
         public Task<Stream> PickImage(ImageLocation location = ImageLocation.All, int maxSize = int.MaxValue)
         {
-            var controller = ApplicationView.ViewController;
+            var controller = _viewController?.Invoke() ?? ApplicationView.ViewController;
 
             var sourceType = location == ImageLocation.Camera 
                 ? UIImagePickerControllerSourceType.Camera
