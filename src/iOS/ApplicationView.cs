@@ -21,7 +21,9 @@
                     viewController = window.RootViewController;
                 }
                 while (viewController.PresentedViewController != null)
+                {
                     viewController = viewController.PresentedViewController;
+                }
                 return viewController;
             }
         }

@@ -48,9 +48,12 @@ namespace Nine.Application.iOS.Test
 		{
 			var ui = new AppUI();
 
-            ui.Notify("title", "message1", new CancellationTokenSource(1000).Token);
-            ui.Notify("title", "message2", new CancellationTokenSource(1000).Token);
-            ui.Notify("title", "message3", new CancellationTokenSource(1000).Token);
+            ui.Toast("title", "message this is a really long message, it should not show the complete message, but there must be some ... at the end of the toeast");
+            ui.Toast(null, "message1");
+            ui.Toast("title1", null);
+            //ui.Notify("title", "message1", new CancellationTokenSource(1000).Token);
+            //ui.Notify("title", "message2", new CancellationTokenSource(1000).Token);
+            //ui.Notify("title", "message3", new CancellationTokenSource(1000).Token);
 
             if (false)
             {
