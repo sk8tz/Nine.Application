@@ -71,7 +71,7 @@
 
                     var hide = new Action(async () =>
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(_toasts.Count > 1 ? 2.5 : 5));
+                            await Task.Delay(TimeSpan.FromSeconds(_toasts.Count > 1 ? 2 : 4));
                             UIView.Animate(0.2, 0, UIViewAnimationOptions.CurveEaseIn | UIViewAnimationOptions.BeginFromCurrentState, () => toast.Alpha = 0, remove);
                         });
 

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Runtime.InteropServices.WindowsRuntime;
     using System.Threading;
     using System.Threading.Tasks;
@@ -20,9 +21,12 @@
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Media;
     using Windows.UI.Xaml.Media.Imaging;
+    using Windows.UI.Xaml.Media.Animation;
 
     public partial class AppUI : IAppUI
     {
+        private readonly SemaphoreSlim _toastQueue = new SemaphoreSlim(1);
+
         public async Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
             var dialog = new MessageDialog(message, title);
@@ -46,10 +50,16 @@
 
         public async void Toast(string title, string message)
         {
-            var grid = FindChild<Grid>(Window.Current.Content);
-            if (grid == null) return;
+            await _toastQueue.WaitAsync();
 
-            var text = !string.IsNullOrEmpty(title) ? $"{title}: {message}" : message ?? "";
+            var grid = FindChild<Grid>(Window.Current.Content);
+            if (grid == null)
+            {
+                _toastQueue.Release();
+                return;
+            }
+
+            var text = string.Join(": ", new[] { title, message }.Where(str => !string.IsNullOrEmpty(str)));
 
             var content = new Border
             {
@@ -65,7 +75,9 @@
             content.Child = new TextBlock
             {
                 Text = text,
-                MaxWidth = 320,
+                MaxLines = 2,
+                MaxWidth = Math.Min(grid.ActualWidth * 0.8, 320),
+                TextWrapping = TextWrapping.Wrap,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Foreground = new SolidColorBrush(Colors.White)
             };
@@ -74,10 +86,29 @@
             if (grid.ColumnDefinitions.Count > 0) Grid.SetColumnSpan(content, grid.ColumnDefinitions.Count);
 
             grid.Children.Add(content);
+            content.Opacity = 0;
 
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            var fadeIn = new Storyboard();
+            var fadeInAnim = new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromSeconds(0.2) };
+            fadeIn.Children.Add(fadeInAnim);
+            Storyboard.SetTarget(fadeInAnim, content);
+            Storyboard.SetTargetProperty(fadeInAnim, "Opacity");
+            fadeIn.Begin();
+
+            await Task.Delay(TimeSpan.FromSeconds(4 - 0.2));
+            
+            var fadeOut = new Storyboard();
+            var fadeOutAnim = new DoubleAnimation { To = 0, Duration = TimeSpan.FromSeconds(0.2) };
+            fadeOut.Children.Add(fadeOutAnim);
+            Storyboard.SetTarget(fadeOutAnim, content);
+            Storyboard.SetTargetProperty(fadeOutAnim, "Opacity");
+            fadeOut.Begin();
+
+            await Task.Delay(TimeSpan.FromSeconds(0.2));
 
             grid.Children.Remove(content);
+
+            _toastQueue.Release();
         }
 
         private static T FindChild<T>(DependencyObject obj) where T : DependencyObject
