@@ -24,9 +24,12 @@ namespace Test
         {
             var ui = new AppUI();
 
-            //while (true)
+            // while (true)
             {
-                await Task.Delay(1000); ui.Toast("hi", "toast lksjdffsdlkfjlsjf;lsfd;asj;fkadfjs;lkfjdskf==================---=-===================");
+                await Task.Delay(1000);
+                ui.Toast("hi", "toast lksjdffsdlkfjlsjf;lsfd;asj; fkadfjs; lkfjdskf==================---=-===================");
+                ui.Toast("hi", "toast 1");
+                ui.Toast("hi", "toast 2");
                 //ui.Toast("notification title", "messagea");
                 //Debug.WriteLine(await ui.Input("enter text here", "default", "ok", false, default(CancellationToken)));
                 //await ui.Confirm("hi", "dialog message", "yes", "no", new CancellationTokenSource(1000).Token);
