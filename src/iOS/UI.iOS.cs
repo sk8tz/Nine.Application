@@ -155,7 +155,7 @@
 
         public virtual Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation)
         {
-            var owner = UIApplication.SharedApplication.KeyWindow;
+            var owner = _viewController?.Invoke()?.View ?? UIApplication.SharedApplication.KeyWindow;
             if (owner == null) return null;
 
             var buttons = items.ToArray();
