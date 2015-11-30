@@ -3,6 +3,11 @@
     using System;
     using System.Diagnostics;
     using System.Threading.Tasks;
+#if iOS
+    using System.Threading;
+    using Foundation;
+    using UIKit;
+#endif
 
     public class ClientInfoProvider : IClientInfoProvider
     {
@@ -108,7 +113,47 @@
             };
         }
 
-        public Task<string> GetPushNotificationChannelAsync() => Task.FromResult<string>(null);
+        private readonly SynchronizationContext _syncContext = SynchronizationContext.Current;
+        private readonly TaskCompletionSource<string> _getPushNotificationChannelTcs = new TaskCompletionSource<string>();
+        
+        public Task<string> GetPushNotificationChannelAsync()
+        {
+            _syncContext.Post(x =>
+                {
+                    // http://developer.xamarin.com/guides/cross-platform/application_fundamentals/notifications/ios/remote_notifications_in_ios/
+                    if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
+                    {
+                        var pushSettings = UIUserNotificationSettings.GetSettingsForTypes(
+                                       UIUserNotificationType.Badge | UIUserNotificationType.Sound,
+                                       new NSSet());
+            
+                        UIApplication.SharedApplication.RegisterUserNotificationSettings(pushSettings);
+                        UIApplication.SharedApplication.RegisterForRemoteNotifications();
+                    }
+                    else
+                    {
+                        UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
+                        UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(notificationTypes);
+                    }
+                }, null);
+
+            return _getPushNotificationChannelTcs.Task;
+        }
+        
+        public void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
+        {
+            var DeviceToken = deviceToken.Description;
+            if (!string.IsNullOrWhiteSpace(DeviceToken)) {
+                DeviceToken = DeviceToken.Trim('<').Trim('>');
+            }
+
+            _getPushNotificationChannelTcs?.TrySetResult(DeviceToken);
+        }
+
+        public void FailedToRegisterForRemoteNotifications (UIApplication application , NSError error)
+        {
+            _getPushNotificationChannelTcs?.TrySetResult(null);
+        }
 #elif WINDOWS
         public PlatformName Platform => PlatformName.Windows;
 
