@@ -124,7 +124,7 @@
                     if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
                     {
                         var pushSettings = UIUserNotificationSettings.GetSettingsForTypes(
-                                       UIUserNotificationType.Badge | UIUserNotificationType.Sound,
+                                       UIUserNotificationType.Alert |  UIUserNotificationType.Badge | UIUserNotificationType.Sound,
                                        new NSSet());
             
                         UIApplication.SharedApplication.RegisterUserNotificationSettings(pushSettings);
@@ -132,7 +132,7 @@
                     }
                     else
                     {
-                        UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
+                        UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Alert |  UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
                         UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(notificationTypes);
                     }
                 }, null);
@@ -143,8 +143,9 @@
         public void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
         {
             var DeviceToken = deviceToken.Description;
-            if (!string.IsNullOrWhiteSpace(DeviceToken)) {
-                DeviceToken = DeviceToken.Trim('<').Trim('>');
+            if (!string.IsNullOrWhiteSpace(DeviceToken))
+            {
+                DeviceToken = DeviceToken.Replace("<", "").Replace(">", "").Replace(" ", "");
             }
 
             _getPushNotificationChannelTcs?.TrySetResult(DeviceToken);
