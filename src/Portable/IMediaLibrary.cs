@@ -22,7 +22,7 @@
 
         void StopSound();
 
-        void BeginCaptureAudio();
+		Task<bool> BeginCaptureAudio();
 
         Stream EndCaptureAudio();
     }

@@ -48,30 +48,43 @@ namespace Nine.Application.iOS.Test
 		{
 			var ui = new AppUI();
 
-            ui.Toast("title", "message this is a really long message, it should not show the complete message, but there must be some ... at the end of the toeast");
-            ui.Toast(null, "message1");
-            ui.Toast("title1", null);
+//            ui.Toast("title", "message this is a really long message, it should not show the complete message, but there must be some ... at the end of the toeast");
+//            ui.Toast(null, "message1");
+//            ui.Toast("title1", null);
             //ui.Notify("title", "message1", new CancellationTokenSource(1000).Token);
             //ui.Notify("title", "message2", new CancellationTokenSource(1000).Token);
             //ui.Notify("title", "message3", new CancellationTokenSource(1000).Token);
 
-            if (false)
+            if (true)
             {
                 var media = new MediaLibrary();
 
-                media.BeginCaptureAudio();
+				if (await media.BeginCaptureAudio ())
+					ui.Toast ("audio", "recording");
+				else 
+					ui.Toast ("audio", "no permisson ");
+				
                 await Task.Delay(5000);
-                using (var audio = media.EndCaptureAudio())
-                using (var o = File.Create("a.wav"))
-                {
-                    audio.CopyTo(o);
-                }
+				var f = Path.Combine (Path.GetTempPath (), "a.wav");
+				using (var audio = media.EndCaptureAudio ()) {
+					System.Diagnostics.Debug.WriteLine (audio.Length);
+					using (var o = File.Create (f)) {
+						audio.CopyTo (o);
+						o.Flush ();
+					}
+				}
 
-                media.PlaySound("a.wav");
+				System.Diagnostics.Debug.WriteLine (new FileInfo (f).Length);
+
+				//ui.Toast ("audio", "playing");
+                var play = media.PlaySound(f);
                 await Task.Delay(1000);
                 media.StopSound();
 
+				await play;
+				ui.Toast ("audio", "done");
 
+				return;
                 using (var img = await media.PickImage(ImageLocation.Library, 32))
                 {
                     await ui.Confirm(null,

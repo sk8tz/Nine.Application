@@ -261,7 +261,7 @@
         private byte[] _audioBuffer = new byte[10240];
         private static readonly string _recorderFile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments) + "LastRecorded.wav";
 
-        public void BeginCaptureAudio()
+        public Task<bool> BeginCaptureAudio()
         {
             if (_recorder != null)
             {
@@ -277,13 +277,14 @@
             if (_recorder.State != State.Initialized)
             {
                 _recorder = null;
-                return;
+                return Task.FromResult(false);
             }
 
             _recorder.StartRecording();
             _trimAudioZeros = true;
 
             ReadAudioBufferAsync();
+            return Task.FromResult(true);
         }
 
         private async void ReadAudioBufferAsync()

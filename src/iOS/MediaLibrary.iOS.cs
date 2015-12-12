@@ -25,7 +25,7 @@
                 : UIImagePickerControllerSourceType.PhotoLibrary;
             
             var tcs = new TaskCompletionSource<Stream>();
-            var picker = new UIImagePickerController { SourceType = sourceType, AllowsEditing = (sourceType == UIImagePickerControllerSourceType.Camera) };
+            var picker = new UIImagePickerController { SourceType = sourceType, AllowsEditing = false };
 
             picker.Canceled += (sender, e) => { tcs.TrySetResult(null); picker.DismissViewController(true, null); };
             picker.FinishedPickingMedia += (sender, e) => { tcs.TrySetResult(GetStream(ResizeImage(e.EditedImage ?? e.OriginalImage, maxSize))); picker.DismissViewController(true, null); };
@@ -149,25 +149,30 @@
 
         private AVAudioPlayer _audioPlayer;
         private AVAudioRecorder _audioRecorder;
+		private TaskCompletionSource<bool> _audioPlayingTcs;
 
         public Task PlaySound(string file)
         {
             StopSound();
 
+			AVAudioSession.SharedInstance().SetCategory(AVAudioSessionCategory.Playback);
+			AVAudioSession.SharedInstance().SetActive(true);
+
             var tcs = new TaskCompletionSource<bool>();
-            _audioPlayer = AVAudioPlayer.FromUrl(NSUrl.FromFilename(file));
-            _audioPlayer.NumberOfLoops = 1;
-            _audioPlayer.Volume = 1.0f;
+			_audioPlayer = AVAudioPlayer.FromUrl(NSUrl.FromFilename(file));
             _audioPlayer.DecoderError += (sender, e) =>
-            {
+			{
                 tcs.TrySetResult(false);
             };
             _audioPlayer.FinishedPlaying += (sender, e) =>
-            {
+			{
                 tcs.TrySetResult(true);
             };
-            _audioPlayer.PrepareToPlay();
-            _audioPlayer.Play();
+			if (!_audioPlayer.Play())
+			{
+				tcs.TrySetResult(false);
+			}
+			_audioPlayingTcs = tcs;
             return tcs.Task;
         }
 
@@ -179,14 +184,27 @@
                 _audioPlayer.Dispose();
                 _audioPlayer = null;
             }
+
+			if (_audioPlayingTcs != null)
+			{
+				_audioPlayingTcs.TrySetResult(true);
+				_audioPlayingTcs = null;
+			}
         }
 
-        public void BeginCaptureAudio()
+		public async Task<bool> BeginCaptureAudio()
         {
+			var tcs = new TaskCompletionSource<bool> ();
+			AVAudioSession.SharedInstance ().RequestRecordPermission(granted => tcs.TrySetResult (granted));
+			if (!await tcs.Task) return false;
+
+			AVAudioSession.SharedInstance().SetCategory(AVAudioSessionCategory.Record);
+			AVAudioSession.SharedInstance().SetActive(true);
+
             NSError error;
             var settings = new AudioSettings { AudioQuality = AVAudioQuality.Medium };
-            
-            _audioRecorder = AVAudioRecorder.Create(new NSUrl($"record-{Guid.NewGuid().ToString()}.wav"), settings, out error);
+            var recordFile = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+			_audioRecorder = AVAudioRecorder.Create(NSUrl.FromFilename(recordFile), settings, out error);
             if (_audioRecorder != null && _audioRecorder.PrepareToRecord())
             {
                 _audioRecorder.Record();
@@ -194,7 +212,9 @@
             else
             {
                 _audioRecorder = null;
+				return false;
             }
+			return true;
         }
 
         public Stream EndCaptureAudio()

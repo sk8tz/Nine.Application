@@ -92,7 +92,7 @@
         public Task<string> SaveImageToLibrary(Stream image, string filename) => Task.FromResult<string>(null);
         public Task PlaySound(string uri) => Task.FromResult(0);
         public void StopSound() { }
-        public void BeginCaptureAudio() { }
+		public Task<bool> BeginCaptureAudio() => Task.FromResult(true);
         public Stream EndCaptureAudio() => null;
 #endif
     }

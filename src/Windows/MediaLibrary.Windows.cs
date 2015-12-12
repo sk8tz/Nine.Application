@@ -132,7 +132,7 @@
         private MediaCapture recorder;
         private InMemoryRandomAccessStream recorderBuffer;
 
-        public async void BeginCaptureAudio()
+        public async Task<bool> BeginCaptureAudio()
         {
             if (recorder != null) recorder.Dispose();
 
@@ -152,13 +152,13 @@
             catch (UnauthorizedAccessException)
             {
                 recorder = null;
-                return;
+                return false;
             }
 
             recorderBuffer = new InMemoryRandomAccessStream();
-            var record = recorder.StartRecordToStreamAsync(MediaEncodingProfile.CreateWav(AudioEncodingQuality), recorderBuffer);
+            recorder.StartRecordToStreamAsync(MediaEncodingProfile.CreateWav(AudioEncodingQuality), recorderBuffer);
             isRecording = true;
-            await record;
+            return true;
         }
 
         public Stream EndCaptureAudio()
