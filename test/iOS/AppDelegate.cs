@@ -76,6 +76,10 @@ namespace Nine.Application.iOS.Test
 
 				System.Diagnostics.Debug.WriteLine (new FileInfo (f).Length);
 
+				var bytes = File.ReadAllBytes (f);
+
+				System.Diagnostics.Debug.WriteLine (System.Text.Encoding.UTF8.GetString(bytes, 0, 4));
+
 				//ui.Toast ("audio", "playing");
                 var play = media.PlaySound(f);
                 await Task.Delay(1000);

@@ -202,8 +202,16 @@
 			AVAudioSession.SharedInstance().SetActive(true);
 
             NSError error;
-            var settings = new AudioSettings { AudioQuality = AVAudioQuality.Medium };
-            var recordFile = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+			var settings = new AudioSettings 
+			{
+				Format = AudioFormatType.LinearPCM,
+				SampleRate = 8000,
+				NumberChannels = 1,
+				LinearPcmBitDepth = 16,
+				LinearPcmFloat = false,
+				LinearPcmBigEndian = false,
+			};
+			var recordFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".wav");
 			_audioRecorder = AVAudioRecorder.Create(NSUrl.FromFilename(recordFile), settings, out error);
             if (_audioRecorder != null && _audioRecorder.PrepareToRecord())
             {
