@@ -4,6 +4,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.IO;
+    using System.Net;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using System.Threading;
     using ObjCRuntime;
@@ -13,16 +15,15 @@
 
     public partial class AppUI : IAppUI
     {
-        public static string AppId { get; set; }
-
+        private string _appId;
         private Action<bool, bool> _closeLastNotification;
         private UIUserNotificationSettings _notificationSettings;
 
         private readonly Func<UIViewController> _viewController;
         private readonly Queue<Action> _toasts = new Queue<Action>();
 
-        public AppUI() { }
-        public AppUI(Func<UIViewController> viewController) { _viewController = viewController; }
+        public AppUI() { GetAppId(); }
+        public AppUI(Func<UIViewController> viewController) : this() { _viewController = viewController; }
 
         public virtual Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
@@ -288,13 +289,34 @@
             return tcs.Task;
         }
 
-        public virtual void RateMe()
+        public async virtual void RateMe()
         {
-            if (!string.IsNullOrEmpty(AppId))
+            if (string.IsNullOrEmpty(_appId))
+            {
+                await GetAppId();
+            }
+            if (!string.IsNullOrEmpty(_appId))
             {
                 // https://github.com/nicklockwood/iRate/blob/master/iRate/iRate.m
-                UIApplication.SharedApplication.OpenUrl(new NSUrl($"itms-apps://itunes.apple.com/app/id{AppId}"));
+                UIApplication.SharedApplication.OpenUrl(new NSUrl($"itms-apps://itunes.apple.com/app/id{_appId}"));
             }
+        }
+
+        private async Task GetAppId(string bundleId = null)
+        {   
+            try
+            {
+                bundleId = bundleId ?? NSBundle.MainBundle.BundleIdentifier;
+                using (var http = new WebClient())
+                {
+                    var json = await http.DownloadStringTaskAsync(new Uri($"https://itunes.apple.com/lookup?bundleId={bundleId}"));
+
+                    // Looking for "trackId":343200656,
+                    var match = Regex.Match(json, @"\""trackId\""\s*:\s*([0-9]*)\s*,");
+                    _appId = match.Groups[1]?.Captures[0]?.Value ?? null;
+                }
+            }
+            catch { }
         }
 
         public virtual void CopyToClipboard(string text)
