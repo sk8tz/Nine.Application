@@ -15,7 +15,7 @@
     {
         public static string AppId { get; set; }
 
-        private UILocalNotification _lastNotification;
+        private Action<bool, bool> _closeLastNotification;
         private UIUserNotificationSettings _notificationSettings;
 
         private readonly Func<UIViewController> _viewController;
@@ -127,6 +127,8 @@
 
         public virtual Task<bool> Notify(string title, string message, CancellationToken cancellation)
         {
+            var tcs = new TaskCompletionSource<bool>();
+            
             var notification = new UILocalNotification();
             notification.AlertTitle = title;
             notification.AlertBody = message;
@@ -134,23 +136,110 @@
 
             if (_notificationSettings == null)
             {
-                _notificationSettings = UIUserNotificationSettings.GetSettingsForTypes(UIUserNotificationType.Alert | UIUserNotificationType.Sound, null);
+                _notificationSettings = UIUserNotificationSettings.GetSettingsForTypes(UIUserNotificationType.Alert | UIUserNotificationType.Badge | UIUserNotificationType.Sound, null);
                 UIApplication.SharedApplication.RegisterUserNotificationSettings(_notificationSettings);
-            }
-
-            if (_lastNotification != null)
-            {
-                UIApplication.SharedApplication.CancelLocalNotification(_lastNotification);
             }
 
             UIApplication.SharedApplication.PresentLocalNotificationNow(notification);
 
+            Action<bool, bool> closeNotification = null;
+
+            var closeLocalNotification = ShowLocalNotification(title, message, () => closeNotification?.Invoke(true, true));
+
+            closeNotification = new Action<bool, bool>((click, cancel) =>
+                {
+                    closeLocalNotification();
+                    if (cancel)
+                    {
+                        UIApplication.SharedApplication.CancelLocalNotification(notification);
+                    }
+                    tcs.TrySetResult(click);
+                });
+
+            _closeLastNotification?.Invoke(false, true);
+            _closeLastNotification = closeNotification;
+
             var syncContext = SynchronizationContext.Current;
-            cancellation.Register(() => syncContext.Post(_ => UIApplication.SharedApplication.CancelLocalNotification(notification), null));
+            cancellation.Register(() => syncContext.Post(_ => closeNotification(false, true), null));
 
-            _lastNotification = notification;
+            Task.Delay(5000).ContinueWith(task => syncContext.Post(_ => closeNotification(false, false), null));
+            return tcs.Task;
+        }
 
-            return Task.FromResult(false);
+        private Action ShowLocalNotification(string title, string message, Action click)
+        {
+            var controller = _viewController?.Invoke() ?? ApplicationView.ViewController;
+            if (controller == null)
+            {
+                controller = new UIViewController();
+                controller.View = new UIView();
+                UIApplication.SharedApplication.KeyWindow.RootViewController = controller;
+            }
+
+            var container = controller.View;
+            var toast = CreateLocalNotificationView(container, title, message, click);
+            if (toast == null) return null;
+
+            var endFrame = toast.Frame;
+            var startFrame = endFrame;
+
+            startFrame.Y -= startFrame.Height;
+            toast.Frame = startFrame;
+
+            container.AddSubview(toast);
+
+            var remove = new Action(() =>
+                {
+                    toast.RemoveFromSuperview();
+                });
+
+            var hide = new Action(() =>
+                {
+                    UIView.Animate(0.2, 0, UIViewAnimationOptions.CurveEaseIn | UIViewAnimationOptions.BeginFromCurrentState, () => toast.Frame = startFrame, remove);
+                });
+
+            UIView.Animate(0.2, 0, UIViewAnimationOptions.CurveEaseOut | UIViewAnimationOptions.AllowUserInteraction, () => toast.Frame = endFrame, null);
+
+            return hide;
+        }
+
+        private UIView CreateLocalNotificationView(UIView container, string title, string message, Action click)
+        {
+            if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(message))
+                return null;
+
+            var wrapper = new UIButton();
+            wrapper.TouchUpInside += (sender, e) => click?.Invoke();
+            wrapper.AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleBottomMargin;
+            wrapper.BackgroundColor = UIColor.FromRGBA(0.0f, 0.0f, 0.0f, 0.8f);
+
+            var text = string.Join(": ", new [] { title, message }.Where(str => !string.IsNullOrEmpty(str)));
+
+            var label = new UILabel();
+            label.AutoresizingMask = UIViewAutoresizing.FlexibleDimensions;
+            label.TextAlignment = UITextAlignment.Left;
+            label.LineBreakMode = UILineBreakMode.TailTruncation;
+            label.TextColor = UIColor.White;
+            label.BackgroundColor = UIColor.Clear;
+            label.Alpha = 1.0f;
+            label.Text = text;
+
+            // size the title label according to the length of the text
+            var maxSizeTitle = new CGSize(container.Bounds.Size.Width, container.Bounds.Size.Height);
+            var expectedSizeTitle = label.SizeThatFits(maxSizeTitle);
+            // UILabel can return a size larger than the max size when the number of lines is 1
+            expectedSizeTitle = new CGSize(Math.Min(maxSizeTitle.Width, expectedSizeTitle.Width), Math.Min(maxSizeTitle.Height, expectedSizeTitle.Height));
+
+            wrapper.Frame = new CGRect(0, 0, container.Bounds.Size.Width, 40);
+
+            label.Frame = new CGRect(20,
+                Math.Max(8, (wrapper.Frame.Height - expectedSizeTitle.Height) * 0.5f), 
+                container.Bounds.Size.Width - 40, 
+                40 - 16);
+
+            wrapper.AddSubview(label);
+
+            return wrapper;
         }
 
         public virtual Task<int?> Select(string title, int? selectedIndex, IEnumerable<string> items, CancellationToken cancellation)
