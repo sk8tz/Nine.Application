@@ -23,6 +23,8 @@
 
         private readonly Func<T, float> _estimateHeight;
 
+        private readonly SynchronizationContext _syncContext = SynchronizationContext.Current;
+
         private UITableViewCell _offscreenCell;
         private int _lastSeenCount;
 
@@ -66,64 +68,70 @@
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems.Count == 1 && _lastSeenCount == _items.Count - 1)
-            {
-                var inpc = e.NewItems[0] as INotifyPropertyChanged;
-                if (inpc != null)
+            _syncContext.Post(_ =>
                 {
-                    inpc.PropertyChanged += OnItemChanged;
-                    _inpcs.Add(inpc);
-                }
-                _table.InsertRows(new [] { NSIndexPath.FromRowSection(e.NewStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
-            }
-            else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems.Count == 1 && _lastSeenCount == _items.Count + 1)
-            {
-                var inpc = e.OldItems[0] as INotifyPropertyChanged;
-                if (_inpcs.Remove(inpc))
-                {
-                    inpc.PropertyChanged -= OnItemChanged;
-                }
-                _table.DeleteRows(new [] { NSIndexPath.FromRowSection(e.OldStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
-            }
-            else
-            {
-                foreach (var inpc in _inpcs)
-                {
-                    inpc.PropertyChanged -= OnItemChanged;
-                }
-                _inpcs.Clear();
-
-                foreach (var item in _items)
-                {
-                    var inpc = item as INotifyPropertyChanged;
-                    if (inpc != null)
+                    if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems.Count == 1 && _lastSeenCount == _items.Count - 1)
                     {
-                        inpc.PropertyChanged += OnItemChanged;
-                        _inpcs.Add(inpc);
+                        var inpc = e.NewItems[0] as INotifyPropertyChanged;
+                        if (inpc != null)
+                        {
+                            inpc.PropertyChanged += OnItemChanged;
+                            _inpcs.Add(inpc);
+                        }
+                        _table.InsertRows(new [] { NSIndexPath.FromRowSection(e.NewStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
                     }
-                }
+                    else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems.Count == 1 && _lastSeenCount == _items.Count + 1)
+                    {
+                        var inpc = e.OldItems[0] as INotifyPropertyChanged;
+                        if (_inpcs.Remove(inpc))
+                        {
+                            inpc.PropertyChanged -= OnItemChanged;
+                        }
+                        _table.DeleteRows(new [] { NSIndexPath.FromRowSection(e.OldStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
+                    }
+                    else
+                    {
+                        foreach (var inpc in _inpcs)
+                        {
+                            inpc.PropertyChanged -= OnItemChanged;
+                        }
+                        _inpcs.Clear();
 
-                _table.ReloadData();
-            }
+                        foreach (var item in _items)
+                        {
+                            var inpc = item as INotifyPropertyChanged;
+                            if (inpc != null)
+                            {
+                                inpc.PropertyChanged += OnItemChanged;
+                                _inpcs.Add(inpc);
+                            }
+                        }
+
+                        _table.ReloadData();
+                    }
+                }, null);
         }
 
         private void OnItemChanged(object sender, EventArgs e)
         {
-            foreach (var i in _table.IndexPathsForVisibleRows)
-            {
-                if (_items[i.Row] == sender)
+            _syncContext.Post(_ =>
                 {
-                    if (_lastSeenCount == _items.Count)
+                    foreach (var i in _table.IndexPathsForVisibleRows)
                     {
-                        _table.ReloadRows(new[]{ i }, UITableViewRowAnimation.None);
+                        if (i.Row >= 0 && i.Row < _items.Count && _items[i.Row] == sender)
+                        {
+                            if (_lastSeenCount == _items.Count)
+                            {
+                                _table.ReloadRows(new[]{ i }, UITableViewRowAnimation.None);
+                            }
+                            else
+                            {
+                                _table.ReloadData();
+                            }
+                            break;
+                        }
                     }
-                    else
-                    {
-                        _table.ReloadData();
-                    }
-                    break;
-                }
-            }
+                }, null);
         }
 
         protected override void Dispose(bool disposing)
