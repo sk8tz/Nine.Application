@@ -231,12 +231,12 @@
             // UILabel can return a size larger than the max size when the number of lines is 1
             expectedSizeTitle = new CGSize(Math.Min(maxSizeTitle.Width, expectedSizeTitle.Width), Math.Min(maxSizeTitle.Height, expectedSizeTitle.Height));
 
-            wrapper.Frame = new CGRect(0, 0, container.Bounds.Size.Width, 40);
+            wrapper.Frame = new CGRect(0, 0, container.Bounds.Size.Width, 60);
 
             label.Frame = new CGRect(20,
                 Math.Max(8, (wrapper.Frame.Height - expectedSizeTitle.Height) * 0.5f), 
                 container.Bounds.Size.Width - 40, 
-                40 - 16);
+                60 - 16);
 
             wrapper.AddSubview(label);
 
