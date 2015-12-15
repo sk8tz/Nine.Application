@@ -16,6 +16,8 @@ namespace Nine.Application.iOS.Test
     [Register("AppDelegate")]
     public partial class AppDelegate : UIApplicationDelegate
     {
+        AppUI ui = new AppUI();
+
         // class-level declarations
         UIWindow window;
 
@@ -32,7 +34,7 @@ namespace Nine.Application.iOS.Test
             window = new UIWindow(UIScreen.MainScreen.Bounds);
 
             // If you have defined a view, add it here:
-            // window.RootViewController  = navigationController;
+            window.RootViewController  = new UINavigationController();
 
 			window.BackgroundColor = UIColor.White;
 
@@ -46,16 +48,18 @@ namespace Nine.Application.iOS.Test
 
 		private async void Test()
 		{
-			var ui = new AppUI();
-
-//            ui.Toast("title", "message this is a really long message, it should not show the complete message, but there must be some ... at the end of the toeast");
+           // ui.RateMe();
+            //ui.Toast("title", "message this is a really long message, it should not show the complete message, but there must be some ... at the end of the toeast");
 //            ui.Toast(null, "message1");
 //            ui.Toast("title1", null);
-            //ui.Notify("title", "message1", new CancellationTokenSource(1000).Token);
+
+            await Task.Delay(1000);
+            var clicked = await ui.Notify("title", "message1 hi, this is a really really long message and ls.", default(CancellationToken));
+            System.Diagnostics.Debug.WriteLine(clicked);
             //ui.Notify("title", "message2", new CancellationTokenSource(1000).Token);
             //ui.Notify("title", "message3", new CancellationTokenSource(1000).Token);
 
-            if (true)
+            if (false)
             {
                 var media = new MediaLibrary();
 

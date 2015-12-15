@@ -4,109 +4,209 @@
     using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.ComponentModel;
+    using System.Threading;
     using Foundation;
     using UIKit;
 
-    public class ObservableTableSource<T> : UITableViewSource
+    public class ObservableTableSource<T> : UITableViewSource where T : class
     {
-        private readonly string cellIdentifier = "TableCell";
+        private readonly bool _dynamicRowHeight;
+        private readonly UITableView _table;
+        private readonly IReadOnlyList<T> _items;
+        private readonly string _cellIdentifier;
+        private readonly INotifyCollectionChanged _incc;
+        private readonly List<INotifyPropertyChanged> _inpcs = new List<INotifyPropertyChanged>();
 
-        private UITableView view;
-        private IList<T> collection;
-        private Dictionary<UITableViewCell, T> initializedViews = new Dictionary<UITableViewCell, T>();
+        private readonly Action<UITableViewCell, T> _prepareView;
+        private readonly Action _reachedBottom;
+        private readonly Action<UITableViewCell, T> _rowSelected;
 
-        public Func<T, string, UITableViewCell> CreateView;
-        public Action<T, UITableViewCell> Visualize;
-        public Func<T, string> GetGroupName;
+        private readonly Func<T, float> _estimateHeight;
 
-        public ObservableTableSource(UITableView view, IList<T> items)
+        private UITableViewCell _offscreenCell;
+        private int _lastSeenCount;
+
+        public T this[int index] => _items[index];
+
+        public ObservableTableSource(
+            UITableView table,
+            string cellIdentifier,
+            IReadOnlyList<T> items,
+            Action<UITableViewCell, T> prepareView,
+            Action<UITableViewCell, T> rowSelected = null,
+            Action reachedBottom = null,
+            Func<T, float> estimateHeight = null,
+            bool dynamicRowHeight = false)
         {
-            this.view = view;
-            this.collection = items;
+            _items = items;
+            _table = table;
+            _cellIdentifier = cellIdentifier;
+            _prepareView = prepareView;
+            _rowSelected = rowSelected;
+            _reachedBottom = reachedBottom;
+            _dynamicRowHeight = dynamicRowHeight;
+            _estimateHeight = estimateHeight;
+            _incc = items as INotifyCollectionChanged;
 
-            ((INotifyCollectionChanged)items).CollectionChanged += OnCollectionChanged;
+            if (_incc != null)
+                _incc.CollectionChanged += OnCollectionChanged;
 
-            this.view.ReloadData();
+            foreach (var item in _items)
+            {
+                var inpc = item as INotifyPropertyChanged;
+                if (inpc != null)
+                {
+                    inpc.PropertyChanged += OnItemChanged;
+                    _inpcs.Add(inpc);
+                }
+            }
+
+            _table.ReloadData();
         }
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Reset)
+            if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems.Count == 1 && _lastSeenCount == _items.Count - 1)
             {
-                view.ReloadData();
-            }
-
-            if (e.Action == NotifyCollectionChangedAction.Add)
-            {
-                var count = e.NewItems.Count;
-                var paths = new NSIndexPath[count];
-
-                for (var i = 0; i < count; i++)
+                var inpc = e.NewItems[0] as INotifyPropertyChanged;
+                if (inpc != null)
                 {
-                    paths[i] = NSIndexPath.FromRowSection(e.NewStartingIndex + i, 0);
+                    inpc.PropertyChanged += OnItemChanged;
+                    _inpcs.Add(inpc);
+                }
+                _table.InsertRows(new [] { NSIndexPath.FromRowSection(e.NewStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
+            }
+            else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems.Count == 1 && _lastSeenCount == _items.Count + 1)
+            {
+                var inpc = e.OldItems[0] as INotifyPropertyChanged;
+                if (_inpcs.Remove(inpc))
+                {
+                    inpc.PropertyChanged -= OnItemChanged;
+                }
+                _table.DeleteRows(new [] { NSIndexPath.FromRowSection(e.OldStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
+            }
+            else
+            {
+                foreach (var inpc in _inpcs)
+                {
+                    inpc.PropertyChanged -= OnItemChanged;
+                }
+                _inpcs.Clear();
+
+                foreach (var item in _items)
+                {
+                    var inpc = item as INotifyPropertyChanged;
+                    if (inpc != null)
+                    {
+                        inpc.PropertyChanged += OnItemChanged;
+                        _inpcs.Add(inpc);
+                    }
                 }
 
-                view.InsertRows(paths, UITableViewRowAnimation.Automatic);
+                _table.ReloadData();
             }
-            else if (e.Action == NotifyCollectionChangedAction.Remove)
-            {
-                var count = e.OldItems.Count;
-                var paths = new NSIndexPath[count];
+        }
 
-                for (var i = 0; i < count; i++)
+        private void OnItemChanged(object sender, EventArgs e)
+        {
+            foreach (var i in _table.IndexPathsForVisibleRows)
+            {
+                if (_items[i.Row] == sender)
                 {
-                    paths[i] = NSIndexPath.FromRowSection(e.OldStartingIndex + i, 0);
+                    if (_lastSeenCount == _items.Count)
+                    {
+                        _table.ReloadRows(new[]{ i }, UITableViewRowAnimation.None);
+                    }
+                    else
+                    {
+                        _table.ReloadData();
+                    }
+                    break;
                 }
-
-                view.DeleteRows(paths, UITableViewRowAnimation.Automatic);
             }
         }
 
-        private void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        protected override void Dispose(bool disposing)
         {
-            var index = collection.IndexOf((T)sender);
-            if (index >= 0)
+            if (_incc != null)
+                _incc.CollectionChanged -= OnCollectionChanged;
+
+            foreach (var inpc in _inpcs)
             {
-                view.ReloadRows(new[] { NSIndexPath.FromRowSection(index, 0) }, UITableViewRowAnimation.Automatic);
+                inpc.PropertyChanged -= OnItemChanged;
             }
-        }
-        
-        public override nint NumberOfSections(UITableView tableView)
-        {
-            return 1;
+            _inpcs.Clear();
+
+            _table.ReloadData();
         }
 
-        public override nint RowsInSection(UITableView tableview, nint section)
-        {
-            return collection.Count;
-        }
+        public override nint NumberOfSections(UITableView tableView) => 1;
+
+        public override nint RowsInSection(UITableView tableview, nint section) => _lastSeenCount = _items.Count;
 
         public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
         {
-            var value = collection[indexPath.Row];
-            var cell = tableView.DequeueReusableCell(cellIdentifier) ?? CreateView(value, cellIdentifier);
-            Visualize(value, cell);
-
-            T oldItem;
-            initializedViews.TryGetValue(cell, out oldItem);
-
-            if (!Equals(oldItem, value))
+            var visibleThreshold = 5;
+            
+            if (indexPath.Row >= _items.Count - visibleThreshold)
             {
-                var oldObservable = oldItem as INotifyPropertyChanged;
-                if (oldObservable != null)
-                {
-                    oldObservable.PropertyChanged -= this.OnItemPropertyChanged;
-                }
-                var observable = value as INotifyPropertyChanged;
-                if (observable != null)
-                {
-                    observable.PropertyChanged += this.OnItemPropertyChanged;
-                }
-
-                initializedViews[cell] = value;
+                _reachedBottom?.Invoke();
             }
 
-            return cell;
+            var item = _items[indexPath.Row];
+            var view = tableView.DequeueReusableCell(_cellIdentifier);
+
+            _prepareView?.Invoke(view, item);
+
+            return view;
+        }
+
+        public override nfloat EstimatedHeight(UITableView tableView, NSIndexPath indexPath)
+        {
+            if (_estimateHeight != null)
+            {
+                return _estimateHeight(_items[indexPath.Row]);
+            }
+            return UITableView.AutomaticDimension;
+        }
+
+        public override nfloat GetHeightForRow(UITableView tableView, NSIndexPath indexPath)
+        {
+            if (!_dynamicRowHeight)
+            {
+                return _table.RowHeight;
+            }
+
+            if (_offscreenCell == null)
+            {
+                _offscreenCell = _table.DequeueReusableCell(_cellIdentifier);
+            }
+
+            var cell = _offscreenCell;
+
+            _prepareView?.Invoke(cell, _items[indexPath.Row]);
+
+            cell.SetNeedsUpdateConstraints();
+            cell.UpdateConstraintsIfNeeded();
+
+            cell.Bounds = new CoreGraphics.CGRect(0, 0, _table.Bounds.Width, _table.Bounds.Height);
+
+            cell.SetNeedsLayout();
+            cell.LayoutIfNeeded();
+
+            var height = cell.ContentView.SystemLayoutSizeFittingSize(UIView.UILayoutFittingCompressedSize).Height;
+            height += 1;
+
+            return height;
+        }
+
+        public override bool ShouldShowMenu(UITableView tableView, NSIndexPath rowAtindexPath) => true;
+
+        public override bool CanPerformAction(UITableView tableView, ObjCRuntime.Selector action, NSIndexPath indexPath, NSObject sender) => false;
+
+        public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
+        {
+            _rowSelected?.Invoke(GetCell(tableView, indexPath), _items[indexPath.Row]);
         }
     }
 }
