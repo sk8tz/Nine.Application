@@ -21,7 +21,7 @@
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <NuGetPackageImportStamp>ad862649</NuGetPackageImportStamp>
-    <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v5.1</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
