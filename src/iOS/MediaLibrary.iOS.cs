@@ -45,86 +45,15 @@
         private static UIImage ResizeImage(UIImage image, int maxSize)
         {
             var newSize = Crop((int)image.Size.Width, (int)image.Size.Height, maxSize);
-            if (newSize.Item1 == image.Size.Width && newSize.Item2 == image.Size.Height)
-            {
-                return image;
-            }
 
-            // https://github.com/giacgbj/UIImageSwiftExtensions/blob/master/UIImage%2BResize.swift
-            var transpose = (image.Orientation == UIImageOrientation.Left ||
-                             image.Orientation == UIImageOrientation.LeftMirrored ||
-                             image.Orientation == UIImageOrientation.Right ||
-                             image.Orientation == UIImageOrientation.RightMirrored);
+            var rect = new CGRect(0, 0, newSize.Item1, newSize.Item2);
+            rect = rect.Integral();
 
-            var rect = new CGRect(0, 0, newSize.Item1, newSize.Item2); 
-            if (!transpose)
-            {
-                rect = rect.Integral();
-            }
-
-            var bitmap = new CGBitmapContext(
-                             null, 
-                             newSize.Item1, 
-                             newSize.Item2, 
-                             image.CGImage.BitsPerComponent,
-                             0,
-                             image.CGImage.ColorSpace,
-                             image.CGImage.BitmapInfo);
-            using (bitmap)
-            {
-                bitmap.ConcatCTM(TransformForOrientation(image, newSize.Item1, newSize.Item2));
-                bitmap.InterpolationQuality = CGInterpolationQuality.High;
-                bitmap.DrawImage(rect, image.CGImage);
-
-                return new UIImage(bitmap.ToImage());
-            }
-        }
-
-        private static CGAffineTransform TransformForOrientation(UIImage image, float width, float height)
-        { 
-            var transform = CGAffineTransform.MakeIdentity();
-
-            switch (image.Orientation) {
-                case UIImageOrientation.Down:
-                case UIImageOrientation.DownMirrored:
-                    // EXIF = 3 / 4
-                    transform = CGAffineTransform.Translate(transform, width, height);
-                    transform = CGAffineTransform.Rotate(transform, (float)Math.PI);
-                    break;
-                case UIImageOrientation.Left:
-                case UIImageOrientation.LeftMirrored:
-                    // EXIF = 6 / 5
-                    transform = CGAffineTransform.Translate(transform, width, 0);
-                    transform = CGAffineTransform.Rotate(transform, (float)Math.PI * 2);
-                    break;
-                case UIImageOrientation.Right:
-                case UIImageOrientation.RightMirrored:
-                    // EXIF = 8 / 7
-                    transform = CGAffineTransform.Translate(transform, 0, height);
-                    transform = CGAffineTransform.Rotate(transform, -(float)Math.PI * 2);
-                    break;
-                default:
-                    break;
-            }
-
-            switch(image.Orientation) {
-                case UIImageOrientation.UpMirrored:
-                case UIImageOrientation.DownMirrored:
-                    // EXIF = 2 / 4
-                    transform = CGAffineTransform.Translate(transform, width, 0);
-                    transform = CGAffineTransform.Scale(transform, -1, 1);
-                    break;
-                case UIImageOrientation.LeftMirrored:
-                case UIImageOrientation.RightMirrored:
-                    // EXIF = 5 / 7
-                    transform = CGAffineTransform.Translate(transform, height, 0);
-                    transform = CGAffineTransform.Scale(transform, -1, 1);
-                    break;
-                default:
-                    break;
-            }
-
-            return transform;
+            UIGraphics.BeginImageContextWithOptions(new CGSize(rect.Width, rect.Height), false, image.CurrentScale);
+            image.Draw(rect);
+            var resizedImage = UIGraphics.GetImageFromCurrentImageContext();
+            UIGraphics.EndImageContext();
+            return resizedImage;
         }
 
         private static Stream GetStream(UIImage image)
