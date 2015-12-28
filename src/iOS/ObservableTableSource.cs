@@ -26,7 +26,6 @@
         private readonly SynchronizationContext _syncContext = SynchronizationContext.Current;
 
         private UITableViewCell _offscreenCell;
-        private int _lastSeenCount;
 
         public T this[int index] => _items[index];
 
@@ -40,6 +39,10 @@
             Func<T, float> estimateHeight = null,
             bool dynamicRowHeight = false)
         {
+            if (table == null) throw new ArgumentNullException(nameof(table));
+            if (items == null) throw new ArgumentNullException(nameof(items));
+            if (prepareView == null) throw new ArgumentNullException(nameof(prepareView));
+
             _items = items;
             _table = table;
             _cellIdentifier = cellIdentifier;
@@ -76,6 +79,7 @@
                     inpc.PropertyChanged += OnItemChanged;
                     _inpcs.Add(inpc);
                 }
+                _table.InsertRows(new [] { NSIndexPath.FromRowSection(e.NewStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
             }
             else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems.Count == 1)
             {
@@ -84,6 +88,7 @@
                 {
                     inpc.PropertyChanged -= OnItemChanged;
                 }
+                _table.DeleteRows(new [] { NSIndexPath.FromRowSection(e.OldStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
             }
             else
             {
@@ -102,13 +107,28 @@
                         _inpcs.Add(inpc);
                     }
                 }
+                _table.ReloadData();
             }
-            _syncContext.Post(_ => _table.ReloadData(), null);
         }
 
         private void OnItemChanged(object sender, EventArgs e)
         {
-            _syncContext.Post(_ => _table.ReloadData(), null);
+            _syncContext.Post(_ =>
+                {
+                    for (var i = 0; i < _items.Count; i++)
+                    {
+                        if (_items[i] == sender)
+                        {
+                            var cell = _table.CellAt(NSIndexPath.FromRowSection(i, 0));
+                            if (cell != null)
+                            {
+                                _prepareView.Invoke(cell, _items[i]);
+                                cell.SetNeedsLayout();
+                            }
+                            break;
+                        }
+                    }
+                }, null);
         }
 
         protected override void Dispose(bool disposing)
@@ -127,21 +147,22 @@
 
         public override nint NumberOfSections(UITableView tableView) => 1;
 
-        public override nint RowsInSection(UITableView tableview, nint section) => _lastSeenCount = _items.Count;
+        public override nint RowsInSection(UITableView tableview, nint section) =>  _items.Count;
 
         public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
         {
             var visibleThreshold = 5;
-            
+
             if (indexPath.Row >= _items.Count - visibleThreshold)
             {
-                _reachedBottom?.Invoke();
+                _syncContext.Post(_ => _reachedBottom?.Invoke(), null);
             }
 
             var item = _items[indexPath.Row];
             var view = tableView.DequeueReusableCell(_cellIdentifier);
 
-            _prepareView?.Invoke(view, item);
+            _prepareView.Invoke(view, item);
+            view.SetNeedsLayout();
 
             return view;
         }
@@ -169,7 +190,7 @@
 
             var cell = _offscreenCell;
 
-            _prepareView?.Invoke(cell, _items[indexPath.Row]);
+            _prepareView.Invoke(cell, _items[indexPath.Row]);
 
             cell.SetNeedsUpdateConstraints();
             cell.UpdateConstraintsIfNeeded();
