@@ -122,8 +122,7 @@
                             var cell = _table.CellAt(NSIndexPath.FromRowSection(i, 0));
                             if (cell != null)
                             {
-                                _prepareView.Invoke(cell, _items[i]);
-                                cell.SetNeedsLayout();
+                                _table.ReloadRows(new []{ NSIndexPath.FromRowSection(i, 0) }, UITableViewRowAnimation.None);
                             }
                             break;
                         }
@@ -159,12 +158,11 @@
             }
 
             var item = _items[indexPath.Row];
-            var view = tableView.DequeueReusableCell(_cellIdentifier);
+            var cell = tableView.DequeueReusableCell(_cellIdentifier);
 
-            _prepareView.Invoke(view, item);
-            view.SetNeedsLayout();
+            _prepareView.Invoke(cell, item);
 
-            return view;
+            return cell;
         }
 
         public override nfloat EstimatedHeight(UITableView tableView, NSIndexPath indexPath)
