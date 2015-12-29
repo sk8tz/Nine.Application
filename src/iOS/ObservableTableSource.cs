@@ -22,8 +22,11 @@
         private readonly Action<UITableViewCell, T> _rowSelected;
 
         private readonly Func<T, float> _estimateHeight;
+        private nfloat[] _cachedRowHeights = new nfloat[4];
 
         private readonly SynchronizationContext _syncContext = SynchronizationContext.Current;
+
+        private int _scrolling;
 
         private UITableViewCell _offscreenCell;
 
@@ -79,7 +82,14 @@
                     inpc.PropertyChanged += OnItemChanged;
                     _inpcs.Add(inpc);
                 }
-                _table.InsertRows(new [] { NSIndexPath.FromRowSection(e.NewStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
+                if (_scrolling > 0)
+                {
+                    _table.ReloadData();
+                }
+                else
+                {
+                    _table.InsertRows(new [] { NSIndexPath.FromRowSection(e.NewStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
+                }
             }
             else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems.Count == 1)
             {
@@ -88,7 +98,14 @@
                 {
                     inpc.PropertyChanged -= OnItemChanged;
                 }
-                _table.DeleteRows(new [] { NSIndexPath.FromRowSection(e.OldStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
+                if (_scrolling > 0)
+                {
+                    _table.ReloadData();
+                }
+                else
+                {
+                    _table.DeleteRows(new [] { NSIndexPath.FromRowSection(e.OldStartingIndex, 0) }, UITableViewRowAnimation.Automatic);
+                }
             }
             else
             {
@@ -115,19 +132,61 @@
         {
             _syncContext.Post(_ =>
                 {
-                    for (var i = 0; i < _items.Count; i++)
+                    var i = GetItemIndex(sender);
+                    if (i < 0) return;
+
+                    if (_cachedRowHeights.Length < _items.Count) 
                     {
-                        if (_items[i] == sender)
+                        Array.Resize(ref _cachedRowHeights, _items.Count);
+                    }
+
+                    var index = NSIndexPath.FromRowSection(i, 0);
+                    var cell = _table.CellAt(index);
+                    if (cell == null) return;
+
+                    var existingHeight = _cachedRowHeights[i];
+                    _prepareView(cell, _items[i]);
+
+                    if (_dynamicRowHeight)
+                    {
+                        var newHeight = GetHeightForRow(_table, index);
+                        if (newHeight != existingHeight)
                         {
-                            var cell = _table.CellAt(NSIndexPath.FromRowSection(i, 0));
-                            if (cell != null)
-                            {
-                                _table.ReloadRows(new []{ NSIndexPath.FromRowSection(i, 0) }, UITableViewRowAnimation.None);
-                            }
-                            break;
+                            // http://stackoverflow.com/questions/19374699/is-there-a-way-to-update-the-height-of-a-single-uitableviewcell-without-recalcu
+                            _table.BeginUpdates();
+                            _table.EndUpdates();
                         }
                     }
                 }, null);
+        }
+
+        private int GetItemIndex(object sender)
+        {
+            for (var i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] == sender)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public override void DecelerationEnded(UIScrollView scrollView)
+        {
+            _scrolling--;
+        }
+        public override void DecelerationStarted(UIScrollView scrollView)
+        {
+            _scrolling++;
+        }
+        public override void DraggingStarted(UIScrollView scrollView)
+        {
+            _scrolling++;
+        }
+        public override void DraggingEnded(UIScrollView scrollView, bool willDecelerate)
+        {
+            _scrolling--;
         }
 
         protected override void Dispose(bool disposing)
@@ -150,11 +209,20 @@
 
         public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
         {
-            var visibleThreshold = 5;
-
-            if (indexPath.Row >= _items.Count - visibleThreshold)
+            if (indexPath.Row >= _items.Count - 1)
             {
-                _syncContext.Post(_ => _reachedBottom?.Invoke(), null);
+                _syncContext.Post(_ =>
+                    {
+                        try
+                        {
+                            _scrolling++;
+                            _reachedBottom?.Invoke();
+                        }
+                        finally
+                        {
+                            _scrolling--;
+                        }
+                    }, null);
             }
 
             var item = _items[indexPath.Row];
@@ -181,6 +249,11 @@
                 return _table.RowHeight;
             }
 
+            if (_cachedRowHeights.Length < _items.Count) 
+            {
+                Array.Resize(ref _cachedRowHeights, _items.Count);
+            }
+
             if (_offscreenCell == null)
             {
                 _offscreenCell = _table.DequeueReusableCell(_cellIdentifier);
@@ -201,7 +274,7 @@
             var height = cell.ContentView.SystemLayoutSizeFittingSize(UIView.UILayoutFittingCompressedSize).Height;
             height += 1;
 
-            return height;
+            return _cachedRowHeights[indexPath.Row] = height;
         }
 
         public override bool ShouldShowMenu(UITableView tableView, NSIndexPath rowAtindexPath) => true;
