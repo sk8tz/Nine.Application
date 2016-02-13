@@ -13,7 +13,7 @@
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Media;
 
-    public partial class MediaLibrary : IMediaLibrary
+    public class MediaLibrary : IMediaLibrary
     {
         public AudioEncodingQuality AudioEncodingQuality { get; set; } = AudioEncodingQuality.Medium;
 
