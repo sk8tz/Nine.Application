@@ -8,12 +8,11 @@
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using System.Threading;
-    using ObjCRuntime;
     using CoreGraphics;
     using UIKit;
     using Foundation;
 
-    public partial class AppUI : IAppUI
+    public class AppUI : IAppUI
     {
         private string _appId;
         private Action<bool, bool> _closeLastNotification;

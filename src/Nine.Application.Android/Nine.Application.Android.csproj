@@ -52,10 +52,10 @@
     <Compile Include="..\shared\*.cs" />
     <Compile Include="ClickListener.cs" />
     <Compile Include="DataContextExtensions.cs" />
-    <Compile Include="GeoLocator.Android.cs" />
-    <Compile Include="MediaLibrary.Android.cs" />
+    <Compile Include="GeoLocator.cs" />
+    <Compile Include="MediaLibrary.cs" />
     <Compile Include="ObservableCollectionAdapter.cs" />
-    <Compile Include="UI.Android.cs" />
+    <Compile Include="AppUI.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Nine.Application.Android.nuspec" />

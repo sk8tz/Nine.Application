@@ -45,6 +45,7 @@
       <Link>CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="IPasswordStore.cs" />
     <Compile Include="IGeoLocator.cs" />
     <Compile Include="IAppBundle.cs" />
     <Compile Include="IClientInfoProvider.cs" />
