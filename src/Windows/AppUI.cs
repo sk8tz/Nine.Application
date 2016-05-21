@@ -10,22 +10,30 @@
     using NotificationsExtensions.ToastContent;
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.DataTransfer;
+    using Windows.Foundation.Metadata;
     using Windows.Graphics.Display;
     using Windows.Graphics.Imaging;
     using Windows.Storage.Streams;
     using Windows.System;
     using Windows.UI;
+    using Windows.UI.Core;
     using Windows.UI.Notifications;
     using Windows.UI.Popups;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Media;
-    using Windows.UI.Xaml.Media.Imaging;
     using Windows.UI.Xaml.Media.Animation;
+    using Windows.UI.Xaml.Media.Imaging;
 
     public partial class AppUI : IAppUI
     {
         private readonly SemaphoreSlim _toastQueue = new SemaphoreSlim(1);
+        private bool _isWindowActive;
+
+        public AppUI()
+        {
+            Window.Current.Activated += (a, b) => _isWindowActive = b.WindowActivationState != CoreWindowActivationState.Deactivated;
+        }
 
         public async Task<bool> Confirm(string title, string message, string yes, string no, CancellationToken cancellation)
         {
@@ -135,6 +143,15 @@
 
         public Task<bool> Notify(string title, string message, CancellationToken cancellation)
         {
+            // Don't show notification on Windows Desktop if the window is not active
+            if (!ApiInformation.IsTypePresent("Windows.UI.ViewManagement.StatusBar"))
+            {
+                if (_isWindowActive)
+                {
+                    return Task.FromResult(false);
+                }
+            }
+
             var templateContent = new ToastText02();
             templateContent.TextHeading.Text = title;
             templateContent.TextBodyWrap.Text = message;
