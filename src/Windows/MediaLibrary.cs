@@ -47,6 +47,8 @@
             if (location.HasFlag(ImageLocation.Camera))
             {
                 var cameraUI = new CameraCaptureUI();
+                cameraUI.PhotoSettings.AllowCropping = false;
+                cameraUI.PhotoSettings.MaxResolution = CameraCaptureUIMaxPhotoResolution.MediumXga;
                 return await cameraUI.CaptureFileAsync(CameraCaptureUIMode.Photo);
             }
             else
@@ -149,14 +151,21 @@
                     MediaCategory = MediaCategory.Communications,
                 });
             }
-            catch (UnauthorizedAccessException)
+            catch
             {
                 recorder = null;
                 return false;
             }
 
-            recorderBuffer = new InMemoryRandomAccessStream();
-            recorder.StartRecordToStreamAsync(MediaEncodingProfile.CreateWav(AudioEncodingQuality), recorderBuffer);
+            try
+            {
+                recorderBuffer = new InMemoryRandomAccessStream();
+                recorder.StartRecordToStreamAsync(MediaEncodingProfile.CreateWav(AudioEncodingQuality), recorderBuffer);
+            }
+            catch
+            {
+                return false;
+            }
             isRecording = true;
             return true;
         }
