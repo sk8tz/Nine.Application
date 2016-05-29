@@ -6,7 +6,7 @@
     using Android.Locations;
     using Android.OS;
 
-    partial class Geolocator
+    public class Geolocator : IGeolocator
     {
         private readonly GeoLocationProvider _provider;
 

@@ -5,7 +5,7 @@
     using System.Threading.Tasks;
     using CoreLocation;
 
-    partial class Geolocator
+    public class Geolocator : IGeolocator
     {
         private readonly CLLocationManager location = new CLLocationManager();
         private TaskCompletionSource<GeoLocation> completion;

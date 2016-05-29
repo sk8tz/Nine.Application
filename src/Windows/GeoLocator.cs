@@ -4,7 +4,7 @@
     using System.Threading.Tasks;
     using Windows.Devices.Geolocation;
 
-    partial class Geolocator
+    public class Geolocator : IGeolocator
     {
         private readonly Windows.Devices.Geolocation.Geolocator locator = new Windows.Devices.Geolocation.Geolocator();
 
