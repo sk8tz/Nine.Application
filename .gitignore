@@ -5,6 +5,8 @@
 *.ide
 *.exe
 
+*.lock.json
+
 /**/bin
 /**/obj
 /packages
