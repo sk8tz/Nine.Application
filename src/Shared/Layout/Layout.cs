@@ -6,10 +6,26 @@
     public struct Rectangle
     {
         public float X, Y, Width, Height;
+
+        public override string ToString() => $"({X},{Y}) {Width}x{Height}";
+    }
+
+    public struct Thickness
+    {
+        public static readonly Thickness Zero = new Thickness();
+
+        public float Left, Right, Top, Bottom;
+
+        public static implicit operator Thickness(float value)
+            => new Thickness { Left = value, Right = value, Top = value, Bottom = value };
+
+        public override string ToString() => $"L:{Left} T:{Top} R:{Right} B:{Bottom}";
     }
 
     public struct DesiredSize
     {
+        public static readonly DesiredSize Empty;
+
         public float DesiredWidth, DesiredHeight, MinWidth, MinHeight;
 
         public DesiredSize(float width, float height)
@@ -35,18 +51,17 @@
         }
     }
 
+    public enum HorizontalAlignment { Left, Center, Right, Stretch }
+
+    public enum VerticalAlignment { Top, Center, Bottom, Stretch }
+
     public struct LayoutView<T>
     {
-        public readonly T View;
-        public readonly ILayoutPanel<T> Panel;
+        public T View;
+        public ILayoutPanel<T> Panel;
+        public Thickness Margin;
 
-        public LayoutView(T view, ILayoutPanel<T> panel)
-        {
-            View = view;
-            Panel = panel;
-        }
-
-        public static implicit operator LayoutView<T>(T view) => new LayoutView<T>(view, null);
+        public static implicit operator LayoutView<T>(T view) => new LayoutView<T> { View = view };
     }
 
     public interface ILayoutPanel<T>
@@ -77,6 +92,13 @@
             Adapter = adapter;
             Bounds = bounds;
             LayoutRoot = null;
+        }
+
+        public LayoutView<T> WithPanel(ILayoutPanel<T> panel)
+        {
+            Debug.Assert(panel != null);
+
+            return new LayoutView<T> { Panel = panel };
         }
 
         public void Dispose()
