@@ -7,7 +7,33 @@
 
     public class LayoutPanel : Panel
     {
-        public event Func<LayoutScope<UIElement>, LayoutView<UIElement>> Layout;
+        public Func<LayoutScope<UIElement>, LayoutView<UIElement>> LayoutHandler;
+
+        protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
+        {
+            var scope = new LayoutScope<UIElement>(LayoutAdapter.Instance);
+            var root = LayoutHandler?.Invoke(scope);
+            if (root != null)
+            {
+                var size = scope.Measure(root.Value, (float)availableSize.Width, (float)availableSize.Height);
+
+                return new Windows.Foundation.Size(size.Width, size.Height);
+            }
+
+            return base.MeasureOverride(availableSize);
+        }
+
+        protected override Windows.Foundation.Size ArrangeOverride(Windows.Foundation.Size finalSize)
+        {
+            var scope = new LayoutScope<UIElement>(LayoutAdapter.Instance);
+            var root = LayoutHandler?.Invoke(scope);
+            if (root != null)
+            {
+                scope.Arrange(root.Value, 0, 0, (float)finalSize.Width, (float)finalSize.Height);
+            }
+
+            return base.ArrangeOverride(finalSize);
+        }
 
         class LayoutAdapter : ILayoutAdapter<UIElement>
         {
@@ -24,32 +50,6 @@
             {
                 view.Arrange(new Rect(x, y, width, height));
             }
-        }
-
-        protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
-        {
-            var scope = new LayoutScope<UIElement>(LayoutAdapter.Instance);
-            var root = Layout?.Invoke(scope);
-            if (root != null)
-            {
-                var size = scope.Measure(root.Value, (float)availableSize.Width, (float)availableSize.Height);
-
-                return new Windows.Foundation.Size(size.Width, size.Height);
-            }
-
-            return base.MeasureOverride(availableSize);
-        }
-
-        protected override Windows.Foundation.Size ArrangeOverride(Windows.Foundation.Size finalSize)
-        {
-            var scope = new LayoutScope<UIElement>(LayoutAdapter.Instance);
-            var root = Layout?.Invoke(scope);
-            if (root != null)
-            {
-                scope.Arrange(root.Value, 0, 0, (float)finalSize.Width, (float)finalSize.Height);
-            }
-
-            return base.ArrangeOverride(finalSize);
         }
     }
 }
