@@ -1,11 +1,25 @@
 ﻿namespace Nine.Application.Layout
 {
     using System;
-    using System.Diagnostics;
+
+    public struct Size
+    {
+        public static readonly Size Zero;
+
+        public float Width, Height;
+
+        public Size(float width, float height) { Width = width;  Height = height; }
+
+        public override string ToString() => $"{Width}x{Height}";
+    }
 
     public struct Rectangle
     {
+        public static readonly Rectangle Zero = new Rectangle();
+
         public float X, Y, Width, Height;
+
+        public Rectangle(float x, float y, float width, float height) { X = x; Y = y; Width = width; Height = height; }
 
         public override string ToString() => $"({X},{Y}) {Width}x{Height}";
     }
@@ -16,39 +30,13 @@
 
         public float Left, Right, Top, Bottom;
 
-        public static implicit operator Thickness(float value)
-            => new Thickness { Left = value, Right = value, Top = value, Bottom = value };
+        public Thickness(float value) { Left = value; Right = value; Top = value; Bottom = value; }
+        public Thickness(float horizontal, float vertical) { Left = Right = horizontal; Top = Bottom = vertical; }
+        public Thickness(float left, float top, float right, float bottom) { Left = left; Top = top; Right = right; Bottom = bottom; }
+
+        public static implicit operator Thickness(float value) => new Thickness(value);
 
         public override string ToString() => $"L:{Left} T:{Top} R:{Right} B:{Bottom}";
-    }
-
-    public struct DesiredSize
-    {
-        public static readonly DesiredSize Empty;
-
-        public float DesiredWidth, DesiredHeight, MinWidth, MinHeight;
-
-        public DesiredSize(float width, float height)
-        {
-            Debug.Assert(!float.IsNaN(width));
-            Debug.Assert(!float.IsNaN(height));
-
-            DesiredWidth = MinWidth = width;
-            DesiredHeight = MinHeight = height;
-        }
-
-        public DesiredSize(float width, float height, float minWidth, float minHeight)
-        {
-            Debug.Assert(!float.IsNaN(width));
-            Debug.Assert(!float.IsNaN(height));
-            Debug.Assert(!float.IsNaN(minWidth));
-            Debug.Assert(!float.IsNaN(minHeight));
-
-            DesiredWidth = width;
-            DesiredHeight = height;
-            MinWidth = minWidth;
-            MinHeight = minHeight;
-        }
     }
 
     public enum HorizontalAlignment { Left, Center, Right, Stretch }
@@ -57,58 +45,56 @@
 
     public struct LayoutView<T>
     {
+        public static readonly LayoutView<T> None = default(LayoutView<T>);
+
         public T View;
         public ILayoutPanel<T> Panel;
-        public Thickness Margin;
 
         public static implicit operator LayoutView<T>(T view) => new LayoutView<T> { View = view };
     }
 
     public interface ILayoutPanel<T>
     {
-        DesiredSize Measure(float width, float height);
+        Size Measure(float width, float height);
 
         void Arrange(float x, float y, float width, float height);
     }
 
     public interface ILayoutAdapter<T>
     {
-        DesiredSize Measure(T view, float width, float height);
+        Size Measure(T view, float width, float height);
 
         void Arrange(T view, float x, float y, float width, float height);
     }
 
-    public struct LayoutScope<T> : IDisposable
+    public static class LayoutExtensions
     {
-        public readonly Rectangle Bounds;
-        public readonly ILayoutAdapter<T> Adapter;
+        public static LayoutView<T> ToLayoutView<T>(this ILayoutPanel<T> panel) => new LayoutView<T> { Panel = panel };
+    }
 
-        public ILayoutPanel<T> LayoutRoot;
+    public struct LayoutScope<T>
+    {
+        private readonly ILayoutAdapter<T> _adapter;
 
-        public LayoutScope(Rectangle bounds, ILayoutAdapter<T> adapter)
+        public LayoutScope(ILayoutAdapter<T> adapter)
         {
             if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
-            Adapter = adapter;
-            Bounds = bounds;
-            LayoutRoot = null;
+            _adapter = adapter;
         }
 
-        public LayoutView<T> WithPanel(ILayoutPanel<T> panel)
+        public Size Measure(LayoutView<T> view, float width, float height)
         {
-            Debug.Assert(panel != null);
+            if (view.Panel != null) return view.Panel.Measure(width, height);
+            if (view.View != null) return _adapter.Measure(view.View, width, height);
 
-            return new LayoutView<T> { Panel = panel };
+            return Size.Zero;
         }
 
-        public void Dispose()
+        public void Arrange(LayoutView<T> view, float x, float y, float width, float height)
         {
-            if (LayoutRoot != null)
-            {
-                var desiredSize = LayoutRoot.Measure(Bounds.Width, Bounds.Height);
-
-                LayoutRoot.Arrange(Bounds.X, Bounds.Y, desiredSize.DesiredWidth, desiredSize.DesiredHeight);
-            }
+            if (view.Panel != null) view.Panel.Arrange(x, y, width, height);
+            else if (view.View != null) _adapter.Arrange(view.View, x, y, width, height);
         }
     }
 }

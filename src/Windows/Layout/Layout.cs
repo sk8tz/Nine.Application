@@ -1,17 +1,23 @@
 ﻿namespace Nine.Application.Layout
 {
+    using System;
     using Windows.Foundation;
     using Windows.UI.Xaml;
+    using Windows.UI.Xaml.Controls;
 
-    public static class WindowsLayoutExtensions
+    public class LayoutPanel : Panel
     {
+        public event Func<LayoutScope<UIElement>, LayoutView<UIElement>> Layout;
+
         class LayoutAdapter : ILayoutAdapter<UIElement>
         {
-            public DesiredSize Measure(UIElement view, float width, float height)
-            {
-                view.Measure(new Size(width, height));
+            public static readonly LayoutAdapter Instance = new LayoutAdapter();
 
-                return new DesiredSize((float)view.DesiredSize.Width, (float)view.DesiredSize.Height);
+            public Size Measure(UIElement view, float width, float height)
+            {
+                view.Measure(new Windows.Foundation.Size(width, height));
+
+                return new Size((float)view.DesiredSize.Width, (float)view.DesiredSize.Height);
             }
 
             public void Arrange(UIElement view, float x, float y, float width, float height)
@@ -20,13 +26,30 @@
             }
         }
 
-        private static readonly LayoutAdapter s_layoutAdapter = new LayoutAdapter();
-
-        public static LayoutScope<UIElement> BeginLayout(this FrameworkElement container)
+        protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
         {
-            var bounds = new Rectangle { X = 0, Y = 0, Width = (float)container.ActualWidth, Height = (float)container.ActualHeight };
+            var scope = new LayoutScope<UIElement>(LayoutAdapter.Instance);
+            var root = Layout?.Invoke(scope);
+            if (root != null)
+            {
+                var size = scope.Measure(root.Value, (float)availableSize.Width, (float)availableSize.Height);
 
-            return new LayoutScope<UIElement>(bounds, s_layoutAdapter);
+                return new Windows.Foundation.Size(size.Width, size.Height);
+            }
+
+            return base.MeasureOverride(availableSize);
+        }
+
+        protected override Windows.Foundation.Size ArrangeOverride(Windows.Foundation.Size finalSize)
+        {
+            var scope = new LayoutScope<UIElement>(LayoutAdapter.Instance);
+            var root = Layout?.Invoke(scope);
+            if (root != null)
+            {
+                scope.Arrange(root.Value, 0, 0, (float)finalSize.Width, (float)finalSize.Height);
+            }
+
+            return base.ArrangeOverride(finalSize);
         }
     }
 }
