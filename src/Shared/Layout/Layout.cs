@@ -97,4 +97,47 @@
             else if (view.View != null) _adapter.Arrange(view.View, x, y, width, height);
         }
     }
+
+    public static class BasicLayout
+    {
+        public static LayoutView<T> WithViews<T>(this LayoutScope<T> scope, params LayoutView<T>[] views)
+        {
+            return new BasicPanel<T>(scope, views).ToLayoutView();
+        }
+
+        class BasicPanel<T> : ILayoutPanel<T>
+        {
+            private readonly LayoutScope<T> _scope;
+            private readonly LayoutView<T>[] _views;
+
+            public BasicPanel(LayoutScope<T> scope, LayoutView<T>[] views)
+            {
+                _scope = scope;
+                _views = views;
+            }
+
+            public Size Measure(float width, float height)
+            {
+                var finalSize = Size.Zero;
+
+                for (var i = 0; i < _views.Length; i++)
+                {
+                    var size = _scope.Measure(_views[i], width, height);
+
+                    if (size.Width > finalSize.Width) finalSize.Width = size.Width;
+                    if (size.Height > finalSize.Height) finalSize.Height = size.Height;
+                }
+
+                return finalSize;
+            }
+
+            public void Arrange(float x, float y, float width, float height)
+            {
+                for (var i = 0; i < _views.Length; i++)
+                {
+                    _scope.Arrange(_views[i], x, y, width, height);
+                }
+            }
+        }
+    }
 }
