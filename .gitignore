@@ -1,0 +1,16 @@
+﻿
+
+*.suo
+*.user
+*.ide
+*.exe
+
+*.lock.json
+
+/**/bin
+/**/obj
+/packages
+/.vs
+
+*.DS_Store
+*.userprefs
