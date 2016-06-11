@@ -23,8 +23,7 @@
     {
         public static readonly GridColumnDefinition Auto = new GridColumnDefinition { Type = GridUnitType.Auto };
 
-        public float Width, MinWidth, MaxWidth;
-
+        public float Width;
         public GridUnitType Type;
 
         public static implicit operator GridColumnDefinition(float width)
@@ -44,8 +43,7 @@
     {
         public static readonly GridRowDefinition Auto = new GridRowDefinition { Type = GridUnitType.Auto };
 
-        public float Height, MinHeight, MaxHeight;
-
+        public float Height;
         public GridUnitType Type;
 
         public static implicit operator GridRowDefinition(float height)
@@ -90,134 +88,95 @@
         {
             private readonly LayoutScope<T> _scope;
             private readonly GridDefinition _grid;
-            private readonly IReadOnlyList<GridLayoutView<T>> _views;
-            private readonly Size[] _viewSizes;
+            private readonly GridLayoutView<T>[] _views;
             private readonly float[] _columnWidths;
             private readonly float[] _rowHeights;
+            private readonly int _maxColumnSpan;
+            private readonly int _maxRowSpan;
 
-            public GridPanel(LayoutScope<T> scope, GridDefinition grid, IReadOnlyList<GridLayoutView<T>> views)
+            public GridPanel(LayoutScope<T> scope, GridDefinition grid, GridLayoutView<T>[] views)
             {
-                Debug.Assert(views.Count > 1);
+                Debug.Assert(views.Length > 1);
+
+                var columnCount = _grid.Columns.Count;
+                var rowCount = _grid.Rows.Count;
 
                 _scope = scope;
                 _grid = grid;
                 _views = views;
-                _viewSizes = new Size[_views.Count];
-                _columnWidths = new float[_grid.Columns.Count];
-                _rowHeights = new float[_grid.Rows.Count];
+                _columnWidths = new float[columnCount];
+                _rowHeights = new float[rowCount];
+
+                for (var i = 0; i < _views.Length; i++)
+                {
+                    if (_views[i].ColumnSpan <= 0) _views[i].ColumnSpan = 1;
+                    if (_views[i].Column + _views[i].ColumnSpan > columnCount) _views[i].ColumnSpan = columnCount - _views[i].Column;
+                    if (_views[i].ColumnSpan > _maxColumnSpan) _maxColumnSpan = _views[i].ColumnSpan;
+
+                    if (_views[i].RowSpan <= 0) _views[i].RowSpan = 1;
+                    if (_views[i].Row + _views[i].RowSpan > rowCount) _views[i].RowSpan = rowCount - _views[i].Row;
+                    if (_views[i].RowSpan > _maxRowSpan) _maxRowSpan = _views[i].RowSpan;
+                }
             }
 
             public Size Measure(float width, float height)
             {
-                var finalSize = Size.Zero;
-
-                for (var i = 0; i < _views.Count; i++)
-                {
-                    _viewSizes[i] = _scope.Measure(_views[i].View, width, height);
-                }
+                var unknownWidth = width;
+                var unknownHeight = height;
 
                 for (var c = 0; c < _grid.Columns.Count; c++)
                 {
-                    var column = _grid.Columns[c];
-                    var columnWidth = Math.Max(MeasureColumnWidth(ref column, c), column.MinWidth);
-                    finalSize.Width += column.MaxWidth == 0.0 ? columnWidth : Math.Min(columnWidth, column.MaxWidth);
-                }
-
-                for (var r = 0; r < _grid.Rows.Count; r++)
-                {
-                    var row = _grid.Rows[r];
-                    var rowHeight = Math.Max(MeasureRowHeight(ref row, r), row.MinHeight);
-                    finalSize.Height += row.MaxHeight == 0.0 ? rowHeight : Math.Min(rowHeight, row.MaxHeight);
-                }
-
-                return finalSize;
-            }
-
-            private float MeasureColumnWidth(ref GridColumnDefinition column, int c)
-            {
-                if (column.Type == GridUnitType.Star)
-                {
-                    throw new NotImplementedException();
-                }
-
-                if (column.Type == GridUnitType.Auto)
-                {
-                    var width = 0.0f;
-                    for (var i = 0; i < _views.Count; i++)
+                    if (_grid.Columns[c].Type == GridUnitType.Pixel)
                     {
-                        var view = _views[i];
-                        if (c >= view.Column && c < view.Column + Math.Max(1, view.ColumnSpan))
+                        unknownWidth -= (_columnWidths[c] = _grid.Columns[c].Width);
+                    }
+                    else
+                    {
+                        _columnWidths[c] = 0;
+                    }
+                }
+
+                for (var cSpan = 1; cSpan < _maxColumnSpan; cSpan++)
+                {
+                    for (var c = 0; c < _grid.Columns.Count; c++)
+                    {
+                        var maxSpan = Math.Min(cSpan, _grid.Columns.Count - c);
+
+                        if (_grid.Columns[c].Type != GridUnitType.Pixel)
                         {
-                            if (_viewSizes[i].Width > width)
+                            var columnSpanWidth = 0.0f;
+
+                            var measureWidth = unknownWidth - _columnWidths[c];
+
+                            for (var i = 1; i < maxSpan; i++)
                             {
-                                width = _viewSizes[i].Width;
+                                if (_grid.Columns[c + i].Type != GridUnitType.Pixel)
+                                {
+                                    measureWidth -= _columnWidths[c + i];
+                                }
                             }
+
+                            for (var i = 0; i < _views.Length; i++)
+                            {
+                                if (_views[i].ColumnSpan == maxSpan && _views[i].Column == c)
+                                {
+                                    var size = _scope.Measure(_views[i].View, measureWidth, height);
+
+                                    if (size.Width > columnSpanWidth) columnSpanWidth = size.Width;
+                                }
+                            }
+
+                            _columnWidths[c + maxSpan - 1] = columnSpanWidth;
                         }
                     }
-                    return width;
                 }
 
-                return column.Width;
-            }
-
-            private float MeasureRowHeight(ref GridRowDefinition row, float r)
-            {
-                if (row.Type == GridUnitType.Star)
-                {
-                    throw new NotImplementedException();
-                }
-
-                if (row.Type == GridUnitType.Auto)
-                {
-                    var height = 0.0f;
-                    for (var i = 0; i < _views.Count; i++)
-                    {
-                        var view = _views[i];
-                        if (r >= view.Row && r < view.Row + Math.Max(1, view.RowSpan))
-                        {
-                            if (_viewSizes[i].Height > height)
-                            {
-                                height = _viewSizes[i].Height;
-                            }
-                        }
-                    }
-                    return height;
-                }
-
-                return row.Height;
+                return new Size(width - unknownWidth, height - unknownHeight);
             }
 
             public void Arrange(float x, float y, float width, float height)
             {
-                for (var i = 0; i < _views.Count; i++)
-                {
-                    _viewSizes[i] = _scope.Measure(_views[i].View, width, height);
-                }
 
-                for (var c = 0; c < _grid.Columns.Count; c++)
-                {
-                    var column = _grid.Columns[c];
-                    var columnWidth = Math.Max(MeasureColumnWidth(ref column, c), column.MinWidth);
-                    if (column.MaxWidth != 0.0) columnWidth = Math.Min(columnWidth, column.MaxWidth);
-
-                    _columnWidths[c] = columnWidth;
-                }
-
-                for (var r = 0; r < _grid.Rows.Count; r++)
-                {
-                    var row = _grid.Rows[r];
-                    var rowHeight = Math.Max(MeasureRowHeight(ref row, r), row.MinHeight);
-                    if (row.MaxHeight != 0.0) rowHeight = Math.Min(rowHeight, row.MaxHeight);
-
-                    _rowHeights[r] = rowHeight;
-                }
-
-                for (var i = 0; i < _views.Count; i++)
-                {
-                    var view = _views[i];
-
-                    _scope.Arrange(view.View, 0, 0, width, height);
-                }
             }
         }
     }
