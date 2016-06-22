@@ -49,8 +49,21 @@
 
         public T View;
         public ILayoutPanel<T> Panel;
+        public LayoutFrame Frame;
 
         public static implicit operator LayoutView<T>(T view) => new LayoutView<T> { View = view };
+    }
+
+    public struct LayoutFrame
+    {
+        public Thickness Margin;
+
+        public float MinWidth;
+        public float MinHeight;
+        public float MaxWidth;
+        public float MaxHeight;
+
+        public static implicit operator LayoutFrame(Thickness margin) => new LayoutFrame { Margin = margin };
     }
 
     public interface ILayoutPanel<T>
@@ -85,16 +98,39 @@
 
         public Size Measure(LayoutView<T> view, float width, float height)
         {
-            if (view.Panel != null) return view.Panel.Measure(width, height);
-            if (view.View != null) return _adapter.Measure(view.View, width, height);
+            Size size = Size.Zero;
 
-            return Size.Zero;
+            if (view.Panel != null)
+            {
+                size = view.Panel.Measure(width, height);
+            }
+            else if (view.View != null)
+            {
+                size = _adapter.Measure(view.View, width, height);
+            }
+
+            if (view.Frame.MaxWidth > 0 && size.Width > view.Frame.MaxWidth) size.Width = view.Frame.MaxWidth;
+            if (size.Width < view.Frame.MinWidth) size.Width = view.Frame.MinWidth;
+
+            if (view.Frame.MaxHeight > 0 && size.Height > view.Frame.MaxHeight) size.Height = view.Frame.MaxHeight;
+            if (size.Height < view.Frame.MinHeight) size.Height = view.Frame.MinHeight;
+
+            size.Width += view.Frame.Margin.Left + view.Frame.Margin.Right;
+            size.Height += view.Frame.Margin.Top + view.Frame.Margin.Bottom;
+
+            return size;
         }
 
         public void Arrange(LayoutView<T> view, float x, float y, float width, float height)
         {
-            if (view.Panel != null) view.Panel.Arrange(x, y, width, height);
-            else if (view.View != null) _adapter.Arrange(view.View, x, y, width, height);
+            if (view.Panel != null)
+            {
+                view.Panel.Arrange(x, y, width, height);
+            }
+            else if (view.View != null)
+            {
+                _adapter.Arrange(view.View, x, y, width, height);
+            }
         }
     }
 
