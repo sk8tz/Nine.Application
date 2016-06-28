@@ -6,7 +6,7 @@
 
     public class LayoutTest
     {
-        public static IReadOnlyList<Rectangle> Layout(float width, float height, Func<LayoutScope<Size>, LayoutView<Size>> layoutHandler)
+        public static Rectangle[] Layout(float width, float height, Func<LayoutScope<Size>, LayoutView<Size>> layoutHandler)
         {
             var adapter = new TestLayoutAdapter();
 
@@ -19,7 +19,7 @@
                 scope.Arrange(root, 0, 0, width, height);
             }
 
-            return adapter.ArrangedRectangles;
+            return adapter.ArrangedRectangles.ToArray();
         }
 
         public static string LayoutAsString(float width, float height, Func<LayoutScope<Size>, LayoutView<Size>> layoutHandler)

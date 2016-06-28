@@ -61,9 +61,7 @@
   <ItemGroup>
     <Compile Include="../../src/Abstractions/**/*.cs" />
     <Compile Include="../../src/Shared/**/*.cs" />
-    <Compile Include="Layout\BasicLayoutTest.cs" />
-    <Compile Include="Layout\LayoutTest.cs" />
-    <Compile Include="Layout\StackLayoutTest.cs" />
+    <Compile Include="Layout\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
