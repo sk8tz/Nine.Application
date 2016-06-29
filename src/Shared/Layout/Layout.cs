@@ -49,6 +49,8 @@
 
         public T View;
         public ILayoutPanel<T> Panel;
+        public HorizontalAlignment HorizontalAlignment;
+        public VerticalAlignment VerticalAlignment;
         public LayoutFrame Frame;
 
         public static implicit operator LayoutView<T>(T view) => new LayoutView<T> { View = view };
@@ -82,7 +84,12 @@
 
     public static class LayoutExtensions
     {
-        public static LayoutView<T> ToLayoutView<T>(this ILayoutPanel<T> panel) => new LayoutView<T> { Panel = panel };
+        public static LayoutView<T> ToLayoutView<T>(this ILayoutPanel<T> panel) => new LayoutView<T>
+        {
+            Panel = panel,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
     }
 
     public struct LayoutScope<T>
@@ -96,7 +103,7 @@
             _adapter = adapter;
         }
 
-        public Size Measure(LayoutView<T> view, float width, float height)
+        public Size Measure(ref LayoutView<T> view, float width, float height)
         {
             Size size = Size.Zero;
 
@@ -120,9 +127,44 @@
 
             return size;
         }
-
-        public void Arrange(LayoutView<T> view, float x, float y, float width, float height)
+        
+        public void Arrange(ref LayoutView<T> view, float x, float y, float width, float height)
         {
+            var size = Measure(ref view, width, height);
+
+            Arrange(ref view, x, y, width, height, size.Width, size.Height);
+        }
+
+        public void Arrange(ref LayoutView<T> view, float x, float y, float width, float height, float viewWidth, float viewHeight)
+        {
+            if (view.HorizontalAlignment == HorizontalAlignment.Right)
+            {
+                x += width - viewWidth;
+            }
+            else if (view.HorizontalAlignment == HorizontalAlignment.Center)
+            {
+                x += (width - viewWidth) / 2;
+            }
+
+            if (view.HorizontalAlignment != HorizontalAlignment.Stretch)
+            {
+                width = viewWidth;
+            }
+
+            if (view.VerticalAlignment == VerticalAlignment.Bottom)
+            {
+                y += height - viewHeight;
+            }
+            else if (view.VerticalAlignment == VerticalAlignment.Center)
+            {
+                y += (height - viewHeight) / 2;
+            }
+
+            if (view.VerticalAlignment != VerticalAlignment.Stretch)
+            {
+                height = viewHeight;
+            }
+
             if (view.Panel != null)
             {
                 view.Panel.Arrange(x, y, width, height);
@@ -158,7 +200,7 @@
 
                 for (var i = 0; i < _views.Length; i++)
                 {
-                    var size = _scope.Measure(_views[i], width, height);
+                    var size = _scope.Measure(ref _views[i], width, height);
 
                     if (size.Width > finalSize.Width) finalSize.Width = size.Width;
                     if (size.Height > finalSize.Height) finalSize.Height = size.Height;
@@ -171,7 +213,7 @@
             {
                 for (var i = 0; i < _views.Length; i++)
                 {
-                    _scope.Arrange(_views[i], x, y, width, height);
+                    _scope.Arrange(ref _views[i], x, y, width, height);
                 }
             }
         }

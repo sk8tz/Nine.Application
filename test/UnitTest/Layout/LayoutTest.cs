@@ -16,19 +16,10 @@
 
             if ((root.View.Width != 0 && root.View.Height != 0) || root.Panel != null)
             {
-                scope.Arrange(root, 0, 0, width, height);
+                scope.Arrange(ref root, 0, 0, width, height);
             }
 
             return adapter.ArrangedRectangles.ToArray();
-        }
-
-        public static string LayoutAsString(float width, float height, Func<LayoutScope<Size>, LayoutView<Size>> layoutHandler)
-        {
-            var rectangles = Layout(width, height, layoutHandler);
-
-            return string.Join(";",
-                rectangles.OrderBy(r => r.Y).ThenBy(r => r.X).ThenBy(r => r.Width).ThenBy(r => r.Height)
-                          .Select(r => $"{r.X},{r.Y},{r.Width},{r.Height}"));
         }
 
         public static IEnumerable<Size> ParseSizes(string sizes)
@@ -45,7 +36,7 @@
 
             public void Arrange(Size view, float x, float y, float width, float height)
             {
-                ArrangedRectangles.Add(new Rectangle(x, y, Math.Min(width, view.Width), Math.Min(height, view.Height)));
+                ArrangedRectangles.Add(new Rectangle(x, y, width, height));
             }
 
             public Size Measure(Size view, float width, float height)

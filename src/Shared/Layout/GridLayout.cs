@@ -75,8 +75,6 @@
         public int Column;
         public int RowSpan;
         public int ColumnSpan;
-        public HorizontalAlignment HorizontalAlignment;
-        public VerticalAlignment VerticalAlignment;
 
         public static implicit operator GridLayoutView<T>(T view) => new GridLayoutView<T> { View = view };
         public static implicit operator GridLayoutView<T>(LayoutView<T> view) => new GridLayoutView<T> { View = view };
@@ -179,7 +177,7 @@
                             {
                                 if (_views[i].ColumnSpan == span && _views[i].Column == c)
                                 {
-                                    var size = _scope.Measure(_views[i].View, measureWidth, height);
+                                    var size = _scope.Measure(ref _views[i].View, measureWidth, height);
 
                                     if (size.Width > columnSpanWidth) columnSpanWidth = size.Width;
                                 }
@@ -240,7 +238,7 @@
                             {
                                 if (_views[i].RowSpan == span && _views[i].Row == r)
                                 {
-                                    var size = _scope.Measure(_views[i].View, width, measureHeight);
+                                    var size = _scope.Measure(ref _views[i].View, width, measureHeight);
 
                                     if (size.Height > rowSpanHeight) rowSpanHeight = size.Height;
                                 }
@@ -297,7 +295,7 @@
                     var top = view.Row == 0 ? 0 : rowTops[view.Row - 1];
                     var bottom = rowTops[view.Row + view.RowSpan - 1];
 
-                    _scope.Arrange(view.View, left, top, right - left, bottom - top);
+                    _scope.Arrange(ref view.View, left, top, right - left, bottom - top);
                 }
             }
         }

@@ -30,7 +30,7 @@
                     scope.StackHorizontally(
                         5.0f,
                         btn2,
-                        new HorizontalStackLayoutView<View> { View = btn3, Alignment = VerticalAlignment.Center }));
+                        new LayoutView<View> { View = btn3, VerticalAlignment = VerticalAlignment.Center }));
 
             SetContentView(root);
         }

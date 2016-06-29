@@ -1,42 +1,77 @@
 ﻿namespace Nine.Application.Layout
 {
-    using System.Linq;
     using Xunit;
 
     public class StackLayoutTest : LayoutTest
     {
-        [Theory]
-        [InlineData(0, 0, 0, "", "")]
-        [InlineData(100, 2, 1, "10,5;12,8", "0,0,10,5;0,6,12,8")]
-        public void stack_v(float width, float height, float spacing, string sizes, string expected)
+        public static TheoryData<float, float, float, LayoutView<Size>[], Rectangle[]> VerticalLayouts =
+                  new TheoryData<float, float, float, LayoutView<Size>[], Rectangle[]>
         {
-            Assert.Equal(expected, LayoutAsString(width, height, scope
-                => scope.StackVertically(spacing, ParseSizes(sizes).Select(s => (VerticalStackLayoutView<Size>)s).ToArray())));
+            { 0, 0, 0, new LayoutView<Size>[0], new Rectangle[0] },
+            { 100, 2, 1,
+                new LayoutView<Size>[]
+                {
+                    new Size(10, 5),
+                    new Size(12, 8),
+                },
+                new []
+                {
+                    new Rectangle(0, 0, 10, 5),
+                    new Rectangle(0, 6, 12, 8),
+                }
+            }
+        };
+
+        public static TheoryData<float, float, float, LayoutView<Size>[], Rectangle[]> HorizontalLayouts =
+                  new TheoryData<float, float, float, LayoutView<Size>[], Rectangle[]>
+        {
+            { 0, 0, 0, new LayoutView<Size>[0], new Rectangle[0] },
+            { 100, 2, 1,
+                new LayoutView<Size>[]
+                {
+                    new Size(10, 5),
+                    new Size(12, 8),
+                },
+                new []
+                {
+                    new Rectangle(0, 0, 10, 5),
+                    new Rectangle(11, 0, 12, 8),
+                }
+            }
+        };
+
+        [Theory, MemberData(nameof(VerticalLayouts))]
+        public void stack_v(float width, float height, float spacing, LayoutView<Size>[] views, Rectangle[] expected)
+        {
+            Assert.Equal(expected, Layout(width, height, scope => scope.StackVertically(spacing, views)));
         }
 
-        [Theory]
-        [InlineData(0, 0, 0, "", "")]
-        [InlineData(100, 2, 1, "10,5;12,8", "0,0,10,5;11,0,12,8")]
-        public void stack_h(float width, float height, float spacing, string sizes, string expected)
+        [Theory, MemberData(nameof(HorizontalLayouts))]
+        public void stack_h(float width, float height, float spacing, LayoutView<Size>[] views, Rectangle[] expected)
         {
-            Assert.Equal(expected, LayoutAsString(width, height, scope
-                => scope.StackHorizontally(spacing, ParseSizes(sizes).Select(s => (HorizontalStackLayoutView<Size>)s).ToArray())));
+            Assert.Equal(expected, Layout(width, height, scope => scope.StackHorizontally(spacing, views)));
         }
 
         [Fact]
         public void stack_v_h()
         {
-            var expected = "0,0,40,40;40,0,40,40;80,0,40,40;-10,40,40,10";
+            var expected = new[]
+            {
+                new Rectangle(0,0,40,40),
+                new Rectangle(40,0,40,40),
+                new Rectangle(80,0,40,40),
+                new Rectangle(-10,40,40,10),
+            };
 
-            Assert.Equal(expected, LayoutAsString(20, 1, scope
+            Assert.Equal(expected, Layout(20, 1, scope
                 => scope.StackVertically(
                     scope.StackHorizontally(
                         new Size(40, 40),
                         new Size(40, 40),
                         new Size(40, 40)),
-                    new VerticalStackLayoutView<Size>
+                    new LayoutView<Size>
                     {
-                        Alignment = HorizontalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Center,
                         View = new Size(40, 10),
                     })));
         }

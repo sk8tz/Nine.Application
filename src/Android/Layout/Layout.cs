@@ -13,10 +13,11 @@
         protected override void OnLayout(bool changed, int l, int t, int r, int b)
         {
             var scope = new LayoutScope<View>(LayoutAdapter.Instance);
-            var root = LayoutHandler?.Invoke(scope);
-            if (root != null)
+            var handler = LayoutHandler;
+            if (handler != null)
             {
-                scope.Arrange(root.Value, l, t, r - l, b - t);
+                var root = handler.Invoke(scope);
+                scope.Arrange(ref root, l, t, r - l, b - t);
             }
         }
 
