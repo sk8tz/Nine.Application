@@ -19,6 +19,13 @@
                     new GridLayoutView<Size> { View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch }, Column = 2 },
                     new GridLayoutView<Size> { View = new Size(20, 10), Row = 2 },
                     new GridLayoutView<Size> { View = new Size(20, 10), Row = 2, Column = 2 },
+
+                    new GridLayoutView<Size> { Row = 1, RowSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Row = 2, RowSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Column = 1, ColumnSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Column = 2, ColumnSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch } },
+                    new GridLayoutView<Size> { RowSpan = 2, ColumnSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Row = 2, Column = 2, RowSpan = 2, ColumnSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch } },
                 },
                 new []
                 {
@@ -26,12 +33,19 @@
                     new Rectangle(100, 0, 20, 50),
                     new Rectangle(0, 50, 20, 10),
                     new Rectangle(100, 50, 20, 10),
+                    
+                    new Rectangle(0, 0, 100, 100),
+                    new Rectangle(0, 50, 100, 50),
+                    new Rectangle(0, 0, 200, 50),
+                    new Rectangle(100, 0, 100, 50),
+                    new Rectangle(0, 0, 200, 100),
+                    new Rectangle(100, 50, 100, 50),
                 }
             }
         };
 
         [Theory, MemberData(nameof(Layouts))]
-        public void gird(float width, float height, GridDefinition grid, GridLayoutView<Size>[] items, Rectangle[] expected)
+        public void grid(float width, float height, GridDefinition grid, GridLayoutView<Size>[] items, Rectangle[] expected)
         {
             Assert.Equal(expected, Layout(width, height, scope => scope.Grid(grid, items)));
         }
