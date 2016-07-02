@@ -11,26 +11,53 @@
     {
         public static readonly GridDefinition Default = new GridDefinition(new[] { GridColumnDefinition.Fill }, new[] { GridRowDefinition.Fill });
 
+        internal readonly float KnownWidth;
+        internal readonly float KnownHeight;
+
+        internal readonly float[] ColumnStarWeights;
+        internal readonly float[] RowStarWeights;
+
         public readonly IReadOnlyList<GridColumnDefinition> Columns;
         public readonly IReadOnlyList<GridRowDefinition> Rows;
 
         public GridDefinition(IEnumerable<string> columns, IEnumerable<string> rows)
-        {
-            Columns = columns.Any() ? columns.Select(c => (GridColumnDefinition)c).ToArray() : Default.Columns;
-            Rows = rows.Any() ? rows.Select(r => (GridRowDefinition)r).ToArray() : Default.Rows;
-        }
+            : this(columns.Select(c => (GridColumnDefinition)c), rows.Select(r => (GridRowDefinition)r))
+        { }
 
         public GridDefinition(IEnumerable<GridColumnDefinition> columns, IEnumerable<GridRowDefinition> rows)
         {
             Columns = columns.Any() ? columns.ToArray() : Default.Columns;
             Rows = rows.Any() ? rows.ToArray() : Default.Rows;
+
+            KnownWidth = Columns.Where(c => c.Type == GridUnitType.Pixel).Sum(c => c.Width);
+            KnownHeight = Rows.Where(r => r.Type == GridUnitType.Pixel).Sum(r => r.Height);
+
+            var totalColumnStarWeights = Columns.Where(c => c.Type == GridUnitType.Star).Sum(c => c.Width);
+            if (totalColumnStarWeights > 0)
+            {
+                ColumnStarWeights = new float[Columns.Count];
+                for (var i = 0; i < Columns.Count; i++)
+                {
+                    ColumnStarWeights[i] = Columns[i].Width / totalColumnStarWeights;
+                }
+            }
+
+            var totalRowStarWeights = Rows.Where(r => r.Type == GridUnitType.Star).Sum(r => r.Height);
+            if (totalRowStarWeights > 0)
+            {
+                RowStarWeights = new float[Rows.Count];
+                for (var i = 0; i < Rows.Count; i++)
+                {
+                    RowStarWeights[i] = Rows[i].Height / totalRowStarWeights;
+                }
+            }
         }
     }
 
     public struct GridColumnDefinition
     {
         public static readonly GridColumnDefinition Auto = new GridColumnDefinition { Type = GridUnitType.Auto };
-        public static readonly GridColumnDefinition Fill = new GridColumnDefinition { Type = GridUnitType.Star };
+        public static readonly GridColumnDefinition Fill = new GridColumnDefinition { Type = GridUnitType.Star, Width = 1 };
 
         public float Width;
         public GridUnitType Type;
@@ -41,6 +68,7 @@
         public static implicit operator GridColumnDefinition(string width)
         {
             if (width == null || width.Length == 0 || width.Equals("Auto", StringComparison.OrdinalIgnoreCase)) return Auto;
+            if (width == "*") return Fill;
             if (width[width.Length - 1] == '*') return new GridColumnDefinition { Width = float.Parse(width.Substring(0, width.Length - 1)), Type = GridUnitType.Star };
             return new GridColumnDefinition { Width = float.Parse(width), Type = GridUnitType.Pixel };
         }
@@ -51,7 +79,7 @@
     public struct GridRowDefinition
     {
         public static readonly GridRowDefinition Auto = new GridRowDefinition { Type = GridUnitType.Auto };
-        public static readonly GridRowDefinition Fill = new GridRowDefinition { Type = GridUnitType.Star };
+        public static readonly GridRowDefinition Fill = new GridRowDefinition { Type = GridUnitType.Star, Height = 1 };
 
         public float Height;
         public GridUnitType Type;
@@ -62,6 +90,7 @@
         public static implicit operator GridRowDefinition(string height)
         {
             if (height == null || height.Length == 0 || height.Equals("Auto", StringComparison.OrdinalIgnoreCase)) return Auto;
+            if (height == "*") return Fill;
             if (height[height.Length - 1] == '*') return new GridRowDefinition { Height = float.Parse(height.Substring(0, height.Length - 1)), Type = GridUnitType.Star };
             return new GridRowDefinition { Height = float.Parse(height), Type = GridUnitType.Pixel };
         }
@@ -131,34 +160,43 @@
 
             public Size Measure(float width, float height)
             {
-                return new Size(MeasureColumns(width, height), MeasureRows(width, height));
+                MeasureColumns(width, height);
+                MeasureRows(width, height);
+                
+                var minWidth = 0.0f;
+                for (var i = 0; i < _columnWidths.Length; i++)
+                {
+                    minWidth += _columnWidths[i];
+                }
+
+                var minHeight = 0.0f;
+                for (var i = 0; i < _rowHeights.Length; i++)
+                {
+                    minHeight += _rowHeights[i];
+                }
+
+                return new Size(minWidth, minHeight);
             }
 
-            private float MeasureColumns(float width, float height)
+            private void MeasureColumns(float width, float height)
             {
-                var unknownSize = width;
+                var columns = (GridColumnDefinition[])_grid.Columns;
+                var unknownSize = width - _grid.KnownWidth;
 
-                for (var i = 0; i < _grid.Columns.Count; i++)
+                for (var i = 0; i < columns.Length; i++)
                 {
-                    if (_grid.Columns[i].Type == GridUnitType.Pixel)
-                    {
-                        unknownSize -= (_columnWidths[i] = _grid.Columns[i].Width);
-                    }
-                    else
-                    {
-                        _columnWidths[i] = 0;
-                    }
+                    _columnWidths[i] = (columns[i].Type == GridUnitType.Pixel) ? columns[i].Width : 0;
                 }
 
                 for (var span = 1; span <= _maxColumnSpan; span++)
                 {
-                    for (var cursor = 0; cursor <= _grid.Columns.Count - span; cursor++)
+                    for (var cursor = 0; cursor <= columns.Length - span; cursor++)
                     {
                         var lastUnknownCursor = -1;
 
                         for (var i = cursor + span - 1; i >= cursor; i--)
                         {
-                            if (_grid.Columns[i].Type != GridUnitType.Pixel)
+                            if (columns[i].Type != GridUnitType.Pixel)
                             {
                                 lastUnknownCursor = i;
                                 break;
@@ -209,42 +247,27 @@
                         }
                     }
                 }
-
-                var totalSize = 0.0f;
-
-                for (var i = 0; i < _columnWidths.Length; i++)
-                {
-                    totalSize += _columnWidths[i];
-                }
-
-                return totalSize;
             }
 
-            private float MeasureRows(float width, float height)
+            private void MeasureRows(float width, float height)
             {
-                var unknownSize = height;
+                var rows = (GridRowDefinition[])_grid.Rows;
 
-                for (var i = 0; i < _grid.Rows.Count; i++)
+                var unknownSize = height;
+                for (var i = 0; i < rows.Length; i++)
                 {
-                    if (_grid.Rows[i].Type == GridUnitType.Pixel)
-                    {
-                        unknownSize -= (_rowHeights[i] = _grid.Rows[i].Height);
-                    }
-                    else
-                    {
-                        _rowHeights[i] = 0;
-                    }
+                    _rowHeights[i] = rows[i].Type == GridUnitType.Pixel ? rows[i].Height : 0;
                 }
 
                 for (var span = 1; span <= _maxRowSpan; span++)
                 {
-                    for (var cursor = 0; cursor <= _grid.Rows.Count - span; cursor++)
+                    for (var cursor = 0; cursor <= rows.Length - span; cursor++)
                     {
                         var lastUnknownCursor = -1;
 
                         for (var i = cursor + span - 1; i >= cursor; i--)
                         {
-                            if (_grid.Rows[i].Type != GridUnitType.Pixel)
+                            if (rows[i].Type != GridUnitType.Pixel)
                             {
                                 lastUnknownCursor = i;
                                 break;
@@ -294,24 +317,74 @@
                         }
                     }
                 }
-
-                var totalSize = 0.0f;
-
-                for (var i = 0; i < _rowHeights.Length; i++)
-                {
-                    totalSize += _rowHeights[i];
-                }
-
-                return totalSize;
             }
 
             public void Arrange(float x, float y, float width, float height)
             {
-                var minWidth = MeasureColumns(width, height);
-                var minHeight = MeasureRows(width, height);
+                MeasureColumns(width, height);
+                MeasureRows(width, height);
+                
+                if (_grid.ColumnStarWeights != null)
+                {
+                    var columns = (GridColumnDefinition[])_grid.Columns;
 
-                var starWidth = Math.Max(0, width - minWidth);
-                var starHeight = Math.Max(0, height - minHeight);
+                    var starWidth = 0.0f;
+
+                    for (var i = 0; i < _columnWidths.Length; i++)
+                    {
+                        if (columns[i].Type != GridUnitType.Star)
+                        {
+                            starWidth += _columnWidths[i];
+                        }
+                    }
+
+                    starWidth = width - starWidth;
+
+                    if (starWidth > 0)
+                    {
+                        for (var i = 0; i < _grid.ColumnStarWeights.Length; i++)
+                        {
+                            if (columns[i].Type == GridUnitType.Star)
+                            {
+                                var columnWidth = starWidth * _grid.ColumnStarWeights[i];
+                                if (columnWidth > _columnWidths[i])
+                                {
+                                    _columnWidths[i] = columnWidth;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (_grid.RowStarWeights != null)
+                {
+                    var rows = (GridRowDefinition[])_grid.Rows;
+                    var starHeight = 0.0f;
+
+                    for (var i = 0; i < _rowHeights.Length; i++)
+                    {
+                        if (rows[i].Type != GridUnitType.Star)
+                        {
+                            starHeight += _rowHeights[i];
+                        }
+                    }
+
+                    starHeight = height - starHeight;
+                    if (starHeight > 0)
+                    {
+                        for (var i = 0; i < _grid.RowStarWeights.Length; i++)
+                        {
+                            if (_grid.Rows[i].Type == GridUnitType.Star)
+                            {
+                                var rowHeight = starHeight * _grid.RowStarWeights[i];
+                                if (rowHeight > _rowHeights[i])
+                                {
+                                    _rowHeights[i] = rowHeight;
+                                }
+                            }
+                        }
+                    }
+                }
 
                 var columnLefts = _columnWidths;
                 var currentLeft = _columnWidths[0];
@@ -330,7 +403,6 @@
                     currentTop += _rowHeights[i];
                     _rowHeights[i] = currentTop;
                 }
-
 
                 for (var i = 0; i < _views.Length; i++)
                 {

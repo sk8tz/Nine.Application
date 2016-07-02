@@ -68,6 +68,54 @@
                     new Rectangle(140, 0, 60, 10),
                 }
             },
+
+            { 200, 100,
+                new GridDefinition(
+                    new [] { "20", "Auto", "20" },
+                    new [] { "20", "Auto", "Auto"}),
+                new []
+                {
+                    new GridLayoutView<Size> { View = new Size(100, 10), ColumnSpan = 3 },
+                    new GridLayoutView<Size> { View = { View = new Size(20, 10), HorizontalAlignment = HorizontalAlignment.Stretch }, Column = 1 },
+
+                    new GridLayoutView<Size> { View = { View = new Size(20, 20), VerticalAlignment = VerticalAlignment.Stretch }, Row = 2 },
+                    new GridLayoutView<Size> { View = new Size(20, 60), RowSpan = 3 },
+                },
+                new []
+                {
+                    new Rectangle(0, 0, 100, 10),
+                    new Rectangle(20, 0, 60, 10),
+
+                    new Rectangle(0, 20, 20, 40),
+                    new Rectangle(0, 0, 20, 60),
+                }
+            },
+
+            { 200, 100,
+                new GridDefinition(
+                    new [] { "20", "Auto", "*"},
+                    new [] { "10", "3*", "6*" }),
+                new []
+                {
+                    new GridLayoutView<Size> { View = new Size(60, 10), Column = 1 },
+                    new GridLayoutView<Size> { View = { View = new Size(20, 10), HorizontalAlignment = HorizontalAlignment.Stretch }, Column = 2 },
+
+                    new GridLayoutView<Size> { Row = 1, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Row = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Row = 1, RowSpan = 2, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch } },
+                    new GridLayoutView<Size> { Row = 0, RowSpan = 3, View = { View = new Size(20, 10), VerticalAlignment = VerticalAlignment.Stretch } },
+                },
+                new []
+                {
+                    new Rectangle(20, 0, 60, 10),
+                    new Rectangle(80, 0, 120, 10),
+
+                    new Rectangle(0, 10, 20, 30),
+                    new Rectangle(0, 40, 20, 60),
+                    new Rectangle(0, 10, 20, 90),
+                    new Rectangle(0, 0, 20, 100),
+                }
+            },
         };
         
         [Theory, MemberData(nameof(Layouts))]
